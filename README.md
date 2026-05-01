@@ -12,16 +12,16 @@ Hệ thống tuân thủ kiến trúc **Monolithic Service-Oriented (Nguyên kh�
 
 ```mermaid
 flowchart TD
-    subgraph Client [Client-Side (Trình duyệt)]
+    subgraph Client
         UI[Giao diện Next.js / React]
         SWR[SWR Cache Management]
     end
 
-    subgraph Server [Server-Side (Next.js API Routes)]
+    subgraph Server
         MW[Auth & CSRF Middleware]
-        Ctrl[API Controllers (Routes)]
+        Ctrl[API Controllers / Routes]
         
-        subgraph Services [Business Logic Layer]
+        subgraph Services
             AuthSvc(Auth Service)
             ContractSvc(Contract Service)
             ApprovalSvc(Approval Service)
@@ -30,7 +30,7 @@ flowchart TD
         end
     end
 
-    subgraph Persistence [Database Layer]
+    subgraph Persistence
         ORM[Prisma ORM]
         DB[(SQLite / PostgreSQL DB)]
     end
@@ -87,7 +87,7 @@ flowchart LR
     SuperAdmin(("Super Admin\n(Quản trị)"))
 
     %% Nhóm Usecase Hợp đồng
-    subgraph Quản Lý Hợp Đồng
+    subgraph ContractManagement
         UC_Create([Tạo hợp đồng nháp])
         UC_Submit([Gửi trình duyệt])
         UC_Approve([Duyệt/Từ chối hàng loạt])
@@ -95,7 +95,7 @@ flowchart LR
     end
 
     %% Nhóm Usecase Hệ thống & Báo cáo
-    subgraph Báo Cáo & Quản Trị
+    subgraph ReportAndAdmin
         UC_Report([Xem Dashboard Thống kê])
         UC_Export([Xuất file CSV UTF-8])
         UC_Users([Quản lý Tài khoản])
@@ -103,7 +103,7 @@ flowchart LR
     end
 
     %% Nhóm Usecase Tự động
-    subgraph Tự Động Hoá (Cron)
+    subgraph Automation
         UC_Scan([Quét Hợp đồng hết hạn])
         UC_Queue([Đẩy Job vào Hàng đợi])
         UC_Mail([Gửi Email nhắc nhở])
