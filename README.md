@@ -1,132 +1,169 @@
-# BÁO CÁO TỔNG QUAN HỆ THỐNG QUẢN LÝ HỢP ĐỒNG ĐIỆN TỬ (E-CONTRACT MANAGEMENT SYSTEM)
+# BÁO CÁO KỸ THUẬT CHI TIẾT: HỆ THỐNG QUẢN LÝ HỢP ĐỒNG ĐIỆN TỬ VÀ NHẮC MỐC GIA HẠN
+*(E-Contract Management & Automated Reminder System)*
 
-**Phiên bản tài liệu:** 1.0 (Dành cho Báo cáo Công ty)
-**Dự án:** Hệ thống quản lý hợp đồng điện tử và nhắc mốc gia hạn thông minh.
-**Mục tiêu:** Số hoá toàn diện quy trình quản lý hợp đồng truyền thống, loại bỏ rủi ro thất lạc văn bản, tự động hoá quy trình phê duyệt đa cấp và giám sát chặt chẽ các mốc thời hạn quan trọng của hợp đồng.
-
----
-
-## 1. TỔNG QUAN KIẾN TRÚC VÀ CÔNG NGHỆ (TECHNOLOGY STACK)
-
-Dự án được xây dựng trên nền tảng kiến trúc **Monolithic Modern (Full-stack Framework)** mang lại sự đồng bộ cao giữa Frontend và Backend, dễ dàng bảo trì và triển khai.
-
-### 1.1. Frontend (Giao diện người dùng)
-- **Next.js 15 (App Router):** Framework React mạnh mẽ nhất hiện nay, hỗ trợ Server-Side Rendering (SSR) và tối ưu hoá SEO, tốc độ tải trang.
-- **React 18:** Xây dựng giao diện dựa trên Component, xử lý luồng dữ liệu mượt mà.
-- **SWR (Stale-While-Revalidate):** Quản lý trạng thái và bộ đệm (cache) phía client, tự động đồng bộ dữ liệu theo thời gian thực mà không làm giật lag giao diện.
-- **Thiết kế UI/UX (Glassmorphism):** Sử dụng Pure CSS Variables và CSS Modules. Áp dụng phong cách thiết kế kính mờ (Glassmorphism) mang lại cảm giác hiện đại, sang trọng và không gian mở cho nền tảng doanh nghiệp.
-
-### 1.2. Backend (Xử lý nghiệp vụ & API)
-- **Next.js API Routes (Serverless-ready):** Toàn bộ API RESTful được xây dựng tích hợp ngay trong dự án. 
-- **Kiến trúc Layered (Service-Oriented):** Tách biệt rõ ràng tầng Controller (API Routes) và tầng Business Logic (Services), giúp code dễ dàng viết Unit Test và tái sử dụng.
-- **Background Worker & Cron Job (Giả lập):** Cơ chế chạy ngầm liên tục quét cơ sở dữ liệu để thực thi các tác vụ trễ như gửi Email nhắc hạn hợp đồng (hàng đợi Queue có cơ chế Retry khi lỗi).
-
-### 1.3. Cơ sở dữ liệu & ORM (Database & Persistence)
-- **Prisma ORM:** Cầu nối giao tiếp với cơ sở dữ liệu mạnh mẽ, hỗ trợ Type-safe 100% (kiểm soát kiểu dữ liệu chặt chẽ từ DB đến Frontend).
-- **SQLite:** CSDL quan hệ nhẹ, tốc độ cao được dùng cho môi trường phát triển (Dễ dàng migrate đổi sang PostgreSQL/MySQL khi lên môi trường Production nhờ Prisma).
-
-### 1.4. Bảo mật & Kiểm thử (Security & Testing)
-- **Bảo mật Đa lớp:** 
-  - **JWT (JSON Web Token):** Lưu trữ trong HttpOnly Cookie để chống tấn công XSS.
-  - **CSRF Token:** Chống tấn công giả mạo request liên miền.
-  - **RBAC (Role-based Access Control):** Phân quyền chặt chẽ từng endpoint.
-- **Automation Testing:**
-  - **Vitest:** Kiểm thử các hàm cốt lõi (Unit tests).
-  - **Playwright:** Khung kiểm thử tự động toàn luồng giao diện (E2E Tests), đóng vai người dùng thật click/gõ phím để đảm bảo không vỡ luồng nghiệp vụ.
+**Phiên bản tài liệu:** 2.0 (Bản Báo Cáo Chuyên Sâu Cấp Doanh Nghiệp)  
+**Mục tiêu nền tảng:** Số hoá toàn diện quy trình vòng đời hợp đồng, từ khâu khởi tạo, lưu trữ, trình duyệt đa cấp, đến tự động hoá cảnh báo nhắc mốc thời hạn. Giải pháp giúp doanh nghiệp loại bỏ hoàn toàn rủi ro phạt vi phạm do trễ hạn hợp đồng, chống thất lạc hồ sơ và tăng cường tính minh bạch (Audit Trail).
 
 ---
 
-## 2. KIẾN TRÚC SƠ ĐỒ USE-CASE (USE-CASE DIAGRAM)
+## 1. KIẾN TRÚC HỆ THỐNG TỔNG THỂ (SYSTEM ARCHITECTURE)
 
-Hệ thống phân cấp quyền hạn thành 4 nhóm đối tượng chính, mỗi đối tượng có một giới hạn chức năng cụ thể nhằm đảm bảo tính bảo mật và tính chuyên trách của doanh nghiệp.
+Hệ thống tuân thủ kiến trúc **Monolithic Service-Oriented (Nguyên khối hướng Dịch vụ)** kết hợp với Serverless API, giúp tối ưu hoá thời gian phản hồi và linh hoạt trong việc mở rộng (Scale).
+
+```mermaid
+flowchart TD
+    subgraph Client [Client-Side (Trình duyệt)]
+        UI[Giao diện Next.js / React]
+        SWR[SWR Cache Management]
+    end
+
+    subgraph Server [Server-Side (Next.js API Routes)]
+        MW[Auth & CSRF Middleware]
+        Ctrl[API Controllers (Routes)]
+        
+        subgraph Services [Business Logic Layer]
+            AuthSvc(Auth Service)
+            ContractSvc(Contract Service)
+            ApprovalSvc(Approval Service)
+            ReminderSvc(Reminder/Cron Service)
+            ReportSvc(Dashboard & Report)
+        end
+    end
+
+    subgraph Persistence [Database Layer]
+        ORM[Prisma ORM]
+        DB[(SQLite / PostgreSQL DB)]
+    end
+
+    %% Luồng dữ liệu
+    UI <-->|HTTP/REST| MW
+    SWR -.->|Auto-fetch| UI
+    MW -->|Validate Request| Ctrl
+    Ctrl --> AuthSvc
+    Ctrl --> ContractSvc
+    Ctrl --> ApprovalSvc
+    Ctrl --> ReminderSvc
+    Ctrl --> ReportSvc
+    
+    AuthSvc --> ORM
+    ContractSvc --> ORM
+    ApprovalSvc --> ORM
+    ReminderSvc --> ORM
+    ReportSvc --> ORM
+    
+    ORM <--> DB
+```
+
+### 1.1. Chi Tiết Công Nghệ (Technology Stack)
+- **Frontend (Tầng Hiển Thị):**
+  - **Next.js 15 (App Router):** Xử lý Server-Side Rendering (SSR) hỗ trợ tải trang nhanh chóng và SEO. Phân tách ranh giới rõ ràng giữa Server Components và Client Components.
+  - **React 18:** Kiến trúc Component-based.
+  - **SWR (Stale-While-Revalidate):** Chiến lược cache dữ liệu thông minh, giúp UI luôn cập nhật realtime mà không cần spam API.
+  - **CSS Modules & CSS Variables:** Thiết kế UI theo chuẩn Glassmorphism (Kính mờ) tạo sự chuyên nghiệp.
+- **Backend (Tầng Nghiệp Vụ):**
+  - **Next.js API (Serverless Routes):** Các RESTful endpoint xử lý logic nghiệp vụ.
+  - **Zod:** Thư viện Validation siêu tốc, kiểm tra chặt chẽ cấu trúc dữ liệu Payload từ người dùng trước khi đưa vào CSDL.
+  - **Bcrypt.js:** Mã hoá mật khẩu (Hashing) an toàn một chiều.
+- **Cơ sở dữ liệu (Tầng Lưu Trữ):**
+  - **Prisma ORM:** Framework tương tác CSDL kiểu an toàn (Type-safe), tự động sinh Typescript interface từ Schema.
+  - **SQLite:** CSDL mặc định cho phát triển (Dev). Hoàn toàn tương thích chuyển đổi 1-1 sang PostgreSQL cho môi trường Production.
+
+---
+
+## 2. BIỂU ĐỒ USE-CASE CHI TIẾT (USE-CASE DIAGRAMS)
+
+Hệ thống triển khai mô hình **RBAC (Role-Based Access Control)** với 4 cấp độ:
+1. `USER`: Chỉ có quyền xem danh sách và chi tiết các hợp đồng được cấp phép.
+2. `STAFF`: Quyền tạo hợp đồng nháp (Draft), chỉnh sửa hợp đồng của mình và gửi yêu cầu phê duyệt.
+3. `ADMIN`: Quyền quản lý toàn bộ hợp đồng, phê duyệt/từ chối, xem báo cáo thống kê và xuất file.
+4. `SUPER_ADMIN`: Toàn quyền hệ thống, quản trị phân quyền tài khoản và tra cứu lịch sử kiểm toán.
 
 ```mermaid
 flowchart LR
-    %% Actors (Được biểu diễn bằng hình tròn)
-    System(("Hệ Thống\n(Background Worker)"))
-    User(("User\n(Người dùng cơ bản)"))
+    %% Định dạng Actors
+    System(("Hệ Thống\n(Background Job)"))
     Staff(("Staff\n(Nhân viên)"))
-    Admin(("Admin\n(Quản lý/Trưởng phòng)"))
-    SuperAdmin(("Super Admin\n(Quản trị hệ thống)"))
+    Admin(("Admin\n(Quản lý)"))
+    SuperAdmin(("Super Admin\n(Quản trị)"))
 
-    %% Usecases (Được biểu diễn bằng hình viên thuốc)
-    UC_Auth([Đăng nhập / Đăng xuất])
-    UC_Dashboard([Xem bảng tin cá nhân])
-    UC_ViewContracts([Xem danh sách hợp đồng & Tải file])
-    UC_Notifications([Nhận thông báo hệ thống])
-    
-    UC_CreateContract([Tạo mới hợp đồng])
-    UC_EditContract([Chỉnh sửa hợp đồng nháp])
-    UC_Submit([Gửi trình duyệt hợp đồng])
+    %% Nhóm Usecase Hợp đồng
+    subgraph Quản Lý Hợp Đồng
+        UC_Create([Tạo hợp đồng nháp])
+        UC_Submit([Gửi trình duyệt])
+        UC_Approve([Duyệt/Từ chối hàng loạt])
+        UC_View([Xem danh sách & Tải PDF])
+    end
 
-    UC_Approve([Phê duyệt / Từ chối hàng loạt])
-    UC_ViewReports([Xem báo cáo thống kê toàn cảnh])
-    UC_Export([Xuất báo cáo Excel/CSV])
+    %% Nhóm Usecase Hệ thống & Báo cáo
+    subgraph Báo Cáo & Quản Trị
+        UC_Report([Xem Dashboard Thống kê])
+        UC_Export([Xuất file CSV UTF-8])
+        UC_Users([Quản lý Tài khoản])
+        UC_Audit([Tra cứu Audit Logs])
+    end
 
-    UC_ManageUsers([Quản lý Tài khoản])
-    UC_AssignRoles([Phân quyền User])
-    UC_AuditLogs([Tra cứu lịch sử kiểm toán])
+    %% Nhóm Usecase Tự động
+    subgraph Tự Động Hoá (Cron)
+        UC_Scan([Quét Hợp đồng hết hạn])
+        UC_Queue([Đẩy Job vào Hàng đợi])
+        UC_Mail([Gửi Email nhắc nhở])
+    end
 
-    UC_Scan([Quét hợp đồng sắp hết hạn])
-    UC_SendEmail([Đẩy Job gửi Email nhắc nhở])
-
-    %% Phân cấp quyền (Mũi tên đứt nét)
-    SuperAdmin -.-> Admin
-    Admin -.-> Staff
-    Staff -.-> User
-
-    %% Kết nối Actor với Usecase
-    User --> UC_Auth
-    User --> UC_Dashboard
-    User --> UC_ViewContracts
-    User --> UC_Notifications
-
-    Staff --> UC_CreateContract
-    Staff --> UC_EditContract
+    %% Gán luồng
+    Staff --> UC_Create
     Staff --> UC_Submit
+    Staff --> UC_View
 
     Admin --> UC_Approve
-    Admin --> UC_ViewReports
+    Admin --> UC_Report
     Admin --> UC_Export
+    Admin --> UC_View
 
-    SuperAdmin --> UC_ManageUsers
-    SuperAdmin --> UC_AssignRoles
-    SuperAdmin --> UC_AuditLogs
+    SuperAdmin --> Admin
+    SuperAdmin --> UC_Users
+    SuperAdmin --> UC_Audit
 
     System --> UC_Scan
-    System --> UC_SendEmail
+    System --> UC_Queue
+    System --> UC_Mail
 ```
-
-### Chi tiết các phân hệ:
-1. **Quản lý hợp đồng:** Số hoá tệp tin đính kèm. Chuẩn hoá vòng đời: DRAFT (Nháp) ➔ PENDING (Chờ duyệt) ➔ APPROVED (Đã duyệt) ➔ ACTIVE (Đang chạy) ➔ EXPIRING (Sắp hết hạn) ➔ EXPIRED/TERMINATED.
-2. **Luồng Phê duyệt:** Cấp lãnh đạo có thể phê duyệt hoặc từ chối kèm lý do. Hệ thống có cơ chế duyệt hàng loạt (Bulk Actions) để tối ưu thời gian.
-3. **Nhắc mốc gia hạn:** Chạy hoàn toàn tự động phía sau server (Background Job). Tự động phân loại mốc 30-15-7 ngày và đẩy thông báo cho người chịu trách nhiệm.
 
 ---
 
-## 3. MÔ HÌNH THỰC THỂ KẾT HỢP (ERD - ENTITY RELATIONSHIP DIAGRAM)
+## 3. VÒNG ĐỜI TRẠNG THÁI HỢP ĐỒNG (STATE MACHINE DIAGRAM)
 
-Sơ đồ thiết kế Cơ sở dữ liệu chuẩn hoá, tối ưu truy vấn và ràng buộc dữ liệu chặt chẽ.
+Hợp đồng trong hệ thống không thể bị thay đổi trạng thái một cách tuỳ tiện. Toàn bộ phải đi qua một luồng (Workflow) khép kín, đảm bảo tính pháp lý.
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT : Tạo mới
+    
+    DRAFT --> PENDING : Gửi phê duyệt
+    PENDING --> DRAFT : Từ chối (Reject)
+    PENDING --> APPROVED : Phê duyệt (Approve)
+    
+    APPROVED --> ACTIVE : Đến ngày hiệu lực
+    
+    ACTIVE --> EXPIRING_SOON : Còn <= 30 ngày
+    EXPIRING_SOON --> EXPIRED : Quá ngày kết thúc
+    
+    ACTIVE --> TERMINATED : Huỷ/Chấm dứt sớm
+    EXPIRED --> RENEWED : Ký phụ lục gia hạn
+    
+    RENEWED --> [*]
+    TERMINATED --> [*]
+```
+
+---
+
+## 4. SƠ ĐỒ THỰC THỂ CƠ SỞ DỮ LIỆU (ERD - ENTITY RELATIONSHIP)
+
+Cơ sở dữ liệu được thiết kế đạt chuẩn **Chuẩn hoá 3NF**, hạn chế tối đa dư thừa dữ liệu và đảm bảo toàn vẹn tham chiếu (Referential Integrity).
 
 ```mermaid
 erDiagram
-    User ||--o{ Contract : "tạo (owner)"
-    User ||--o{ Notification : "nhận"
-    User ||--o{ AuditLog : "thực hiện"
-    User ||--o{ ContractApprovalHistory : "thực hiện duyệt"
-    
-    Partner ||--o{ Contract : "ký kết"
-    ContractType ||--o{ Contract : "phân loại"
-    
-    Contract ||--o{ ContractFile : "đính kèm"
-    Contract ||--o{ ReminderJob : "lên lịch nhắc"
-    Contract ||--o{ ReminderLog : "lịch sử gửi nhắc"
-    Contract ||--o{ ContractApprovalHistory : "lịch sử duyệt"
-    Contract ||--o{ AuditLog : "lưu vết thay đổi"
-
-    Contract ||--o| Contract : "gia hạn từ (parent)"
-
-    User {
+    %% Entities
+    USER {
         String id PK
         String email UK
         String passwordHash
@@ -134,9 +171,9 @@ erDiagram
         Enum status "ACTIVE, INACTIVE, BLOCKED"
     }
 
-    Contract {
+    CONTRACT {
         String id PK
-        String code UK "Mã HĐ"
+        String code UK "Mã HĐ (Auto-gen)"
         String title
         Float value
         DateTime startDate
@@ -145,127 +182,156 @@ erDiagram
         Enum approvalStatus "PENDING, APPROVED..."
     }
 
-    Partner {
+    PARTNER {
         String id PK
         String name
         String taxCode
-        Enum partnerType
-        Enum status
+        Enum partnerType "CUSTOMER, SUPPLIER"
     }
 
-    ReminderJob {
+    CONTRACT_APPROVAL_HISTORY {
         String id PK
-        String contractId FK
-        DateTime scheduledAt
-        Enum status "PENDING, SUCCESS, FAILED"
-        Int attempts
-    }
-
-    AuditLog {
-        String id PK
-        String action "VD: CONTRACT_APPROVED"
-        String entityType "CONTRACT"
-        String entityId
+        String action "SUBMIT, APPROVE, REJECT"
+        String reason "Lý do từ chối"
         DateTime createdAt
     }
+
+    REMINDER_JOB {
+        String id PK
+        DateTime scheduledAt
+        Enum status "PENDING, SUCCESS, FAILED"
+        Int attempts "Cơ chế Retry"
+    }
+
+    AUDIT_LOG {
+        String id PK
+        String action "Hành động (VD: Delete)"
+        String entityType
+        String entityId
+    }
+
+    %% Relationships
+    USER ||--o{ CONTRACT : "tạo (owner)"
+    USER ||--o{ CONTRACT_APPROVAL_HISTORY : "duyệt"
+    USER ||--o{ AUDIT_LOG : "sinh ra log"
+    
+    PARTNER ||--o{ CONTRACT : "thuộc về"
+    
+    CONTRACT ||--o{ CONTRACT_APPROVAL_HISTORY : "lịch sử duyệt"
+    CONTRACT ||--o{ REMINDER_JOB : "lịch nhắc nhở"
+    CONTRACT ||--o{ AUDIT_LOG : "lưu vết thay đổi"
+    CONTRACT ||--o| CONTRACT : "gia hạn (Self-Relation)"
 ```
+
+### Giải thích các Bảng trọng yếu:
+- **Bảng `User` & `Partner`:** Quản lý danh tính và thông tin đối tác ký kết.
+- **Bảng `Contract`:** Trái tim của hệ thống. Chứa toàn bộ Meta-data của hợp đồng.
+- **Bảng `ContractApprovalHistory`:** Lưu trữ chặt chẽ ai đã duyệt, duyệt lúc nào, lý do từ chối là gì. Phục vụ truy vết.
+- **Bảng `ReminderJob` & `ReminderLog`:** Triển khai cơ chế Hàng đợi (Queue) cho việc gửi Email. Tránh việc nghẽn Server khi phải gửi hàng ngàn Email cùng lúc.
+- **Bảng `AuditLog`:** Tính năng cao cấp. Bất cứ hành động CRUD nào tác động lên DB đều được ghi lại (Kẻ xâm nhập không thể xoá không để lại dấu vết).
 
 ---
 
-## 4. CẤU TRÚC THƯ MỤC DỰ ÁN (PROJECT STRUCTURE)
+## 5. CƠ CHẾ BẢO MẬT & XỬ LÝ LỖI (SECURITY & ERROR HANDLING)
 
-Dự án được sắp xếp cực kỳ khoa học, tuân thủ nguyên tắc Domain-Driven Design (cơ bản) và Component-Based.
+Hệ thống được lập trình với tư duy **Security-First (Bảo mật đặt lên hàng đầu)**:
+1. **Chống XSS (Cross-Site Scripting):** Mọi Token đăng nhập (JWT) được lưu vào **HttpOnly Cookie**. JavaScript phía Client hoàn toàn không thể đánh cắp token này.
+2. **Chống CSRF (Cross-Site Request Forgery):** Bổ sung custom header (`x-csrf-token`) bắt buộc ở mọi request thay đổi dữ liệu (POST, PUT, DELETE).
+3. **Phân Quyền Tuyệt Đối (Server-Side Authorization):** Không chỉ ẩn nút bấm ở Frontend, hệ thống chặn trực tiếp các truy cập trái phép tại API bằng hàm `assertAdmin()` hoặc kiểm tra quyền sở hữu hợp đồng `contract.ownerId === user.id`.
+4. **Data Validation (Zod):** Nếu người dùng cố tình gửi dữ liệu ngày bắt đầu lớn hơn ngày kết thúc (`startDate > endDate`), Backend sẽ huỷ Request ngay lập tức kèm mã lỗi 400 Bad Request.
+
+---
+
+## 6. CẤU TRÚC MÃ NGUỒN CHUYÊN SÂU (DIRECTORY STRUCTURE)
+
+Dự án áp dụng cấu trúc thư mục quy chuẩn, tách biệt hoàn toàn Giao diện, Logic và CSDL.
 
 ```text
 E-CONTRACT-SYSTEM/
-├── app/                        # [Nền tảng Next.js App Router]
-│   ├── (dashboard)/            # Chứa toàn bộ giao diện sau đăng nhập (Bảo vệ bởi Middleware)
-│   │   ├── admin/              # Màn hình quản trị (Chỉ ADMIN/SUPER_ADMIN thấy)
-│   │   ├── contracts/          # Màn hình quản lý hợp đồng
-│   │   ├── notifications/      # Trung tâm thông báo
-│   │   └── settings/           # Cài đặt cấu hình cá nhân
-│   ├── api/                    # [Backend] RESTful API endpoints
-│   │   ├── admin/              # API phân quyền, báo cáo, duyệt hợp đồng
-│   │   ├── auth/               # API xác thực JWT, Login, Logout
-│   │   ├── contracts/          # API nghiệp vụ hợp đồng chính
-│   │   └── reminders/          # API xử lý ngầm gửi thông báo
-│   ├── login/                  # Giao diện đăng nhập tĩnh
-│   └── globals.css             # Định nghĩa Design System (CSS Variables)
+├── app/                        # 1. Routing & API Controllers
+│   ├── (dashboard)/            # Frontend Pages (Server Components + Client Components)
+│   ├── api/                    # Backend API Endpoints (Nhận request, trả JSON)
+│   └── globals.css             # Định nghĩa Design Tokens (Màu sắc, Font)
 │
-├── components/                 # [React UI Components] Modules tái sử dụng cao
-│   ├── admin/                  # Bảng số liệu, Biểu đồ thống kê (Recharts)
-│   ├── contracts/              # Form tạo mới, Form tìm kiếm hợp đồng
-│   ├── layout/                 # Bộ khung (Sidebar, Header thông minh, Menu)
-│   └── shared/                 # Thành phần vi mô (Nút bấm, Bảng dữ liệu, Popup cảnh báo)
+├── components/                 # 2. Reusable UI Components
+│   ├── admin/                  # Các tổ hợp chức năng phức tạp (Bảng thống kê, Modal duyệt)
+│   ├── dashboard/              # Các Widget thống kê thời gian thực
+│   └── shared/                 # Thành phần nguyên tử (Button, Input, Alert, DataTable)
 │
-├── lib/                        # [Core Libraries] Các tiện ích hệ thống cốt lõi
-│   ├── auth.ts                 # Trái tim bảo mật (Mã hoá/Giải mã Token, phân quyền)
-│   ├── csv.ts                  # Bộ nén và xuất file CSV (Chèn UTF-8 BOM chống lỗi font)
-│   ├── api-client.ts           # Wrapper chuẩn hoá mọi Request lên server
-│   └── prisma.ts               # Khởi tạo siêu kết nối đến CSDL
+├── services/                   # 3. Core Business Logic (Tầng Cốt Lõi)
+│   ├── approval.service.ts     # Trọng tài xử lý logic duyệt hợp đồng (Ma trận trạng thái)
+│   ├── contract.service.ts     # Thao tác CSDL (Tạo/Sửa/Xoá hợp đồng)
+│   ├── reminder.service.ts     # Công cụ rà quét hợp đồng cận date
+│   └── admin.service.ts        # Quản trị hệ thống và người dùng
 │
-├── services/                   # [Business Logic Layer] Tầng xử lý nghiệp vụ nặng
-│   ├── approval.service.ts     # Xử lý ma trận trạng thái duyệt
-│   ├── contract.service.ts     # Thao tác CSDL (Tạo/Sửa/Xoá hợp đồng an toàn)
-│   ├── dashboard.service.ts    # Tính toán, nhóm dữ liệu phục vụ biểu đồ KPI
-│   └── reminder.service.ts     # Trái tim của hệ thống nhắc hạn ngầm
+├── lib/                        # 4. Utilities & Configs
+│   ├── api-client.ts           # Interceptor cho Frontend (Tự động gắn CSRF)
+│   ├── auth.ts                 # Trình tạo và xác thực mã hoá JWT
+│   ├── csv.ts                  # Bộ xử lý xuất CSV kèm mã BOM (Sửa lỗi font Excel)
+│   └── permissions.ts          # Ma trận kiểm soát phân quyền hệ thống
 │
-├── prisma/                     # [Database Configuration]
-│   ├── schema.prisma           # Trực quan hoá toàn bộ CSDL (Mã nguồn duy nhất cho DB)
-│   └── seed.ts                 # Script tự động sinh 1000+ dữ liệu giả lập để test hiệu năng
+├── prisma/                     # 5. Database Layer
+│   ├── schema.prisma           # Trực quan hoá Entity (Sổ cái thiết kế DB)
+│   └── seed.ts                 # Kịch bản rải 1000+ dữ liệu mẫu siêu tốc
 │
-├── tests/                      # [Quality Assurance]
-│   ├── e2e/                    # Chạy robot giả lập người dùng thao tác trên trình duyệt
-│   └── unit/                   # Kiểm tra tính đúng đắn của từng hàm nhỏ (VD: Test BOM CSV)
+├── tests/                      # 6. Quality Assurance (Tự động hoá kiểm thử)
+│   ├── unit/                   # Vitest: Rà lỗi các hàm thuật toán độc lập
+│   └── e2e/                    # Playwright: Robot giả lập thao tác người dùng thật
 │
-└── docs/                       # Tài liệu lưu trữ vòng đời dự án (Báo cáo Audit, Bug log)
+└── docs/                       # 7. Knowledge Base (Báo cáo kỹ thuật, API Specs)
 ```
 
 ---
 
-## 5. HƯỚNG DẪN TRIỂN KHAI VÀ VẬN HÀNH (DEPLOYMENT & SETUP)
+## 7. HƯỚNG DẪN TRIỂN KHAI VÀ VẬN HÀNH (DEPLOYMENT)
 
-### 5.1. Cài đặt Môi trường Phát triển (Local Setup)
+### 7.1. Cài đặt Môi trường Cục bộ (Local Development)
 
 ```bash
-# 1. Tải các gói thư viện phụ thuộc
+# 1. Tải toàn bộ thư viện (Node.js v18+)
 npm install
 
-# 2. Sinh mã kết nối cơ sở dữ liệu (Prisma Client)
+# 2. Đồng bộ Schema Prisma và sinh Typescript Interface
 npx prisma generate
 
-# 3. Chạy Migration (Khởi tạo CSDL SQLite)
+# 3. Chạy Migration (Khởi tạo Database SQLite)
 npx prisma migrate dev
 
-# 4. Sinh dữ liệu mẫu (1000+ hợp đồng, phòng ban, người dùng)
+# 4. Bơm dữ liệu giả (Tạo ngay 1000 hợp đồng và người dùng)
 npm run prisma:seed
 
-# 5. Khởi động Web Server (Môi trường dev)
+# 5. Khởi động Web Server
 npm run dev
 ```
+Trình duyệt sẽ mở tại: `http://localhost:3000`
 
-Truy cập hệ thống tại: `http://localhost:3000`
-
-### 5.2. Chạy Kiểm thử (QA & Testing)
-
+### 7.2. Bộ Công Cụ Giám Sát Mã Nguồn (Code Quality)
 ```bash
-# Quét lỗi cú pháp và cảnh báo code smell
-npm run lint          
-
-# Chạy Unit Tests để đảm bảo logic cốt lõi không vỡ
-npm run test          
-
-# Chạy kịch bản người dùng thật (End-to-End Tests)
-npm run test:e2e      
+npm run lint          # Quét lỗi cú pháp, chuẩn hoá format
+npm run typecheck     # Kiểm soát chặt chẽ lỗi Type Mismatch
+npm run test          # Chạy toàn bộ Unit Tests
+npm run test:e2e      # Chạy giả lập Playwright Testing
 ```
 
-### 5.3. Tài khoản Trải nghiệm Hệ thống (Dữ liệu mẫu)
-Mật khẩu chung cho mọi tài khoản: `Staff@12345`
-
-1. **Super Admin:** `system@example.com` (Toàn quyền sinh sát, quản trị hệ thống)
-2. **Admin:** `admin@example.com` (Trưởng phòng: Xem báo cáo, Duyệt hợp đồng hàng loạt)
-3. **Staff:** `staff@example.com` (Nhân viên: Tạo hợp đồng, tải file PDF, gửi duyệt)
-4. **User:** `john@example.com` (Khách/Thực tập sinh: Chỉ được xem)
+### 7.3. Triển khai Production (Vultr / AWS / Vercel)
+```bash
+npm run build         # Nén và tối ưu hoá mã nguồn (Minify & Tree-shaking)
+npm start             # Khởi động Node Server ở chế độ hiệu năng cao
+```
 
 ---
-*Tài liệu được trích xuất và bảo lưu từ quy trình phát triển chuyên nghiệp của Hệ thống Quản lý Hợp đồng.*
+
+## 8. THÔNG TIN TRUY CẬP (DEMO ACCOUNTS)
+
+Cơ sở dữ liệu mẫu (`seed.ts`) đã thiết lập sẵn các cấp bậc tài khoản để đánh giá nghiệp vụ.  
+**Mật khẩu chung:** `Staff@12345`
+
+| Vai trò (Role) | Email | Chức năng kiểm thử |
+| :--- | :--- | :--- |
+| **Super Admin** | `system@example.com` | Xoá người dùng, tra cứu Audit Logs toàn hệ thống. |
+| **Admin** | `admin@example.com` | Duyệt hợp đồng hàng loạt, xem biểu đồ, xuất CSV. |
+| **Staff** | `staff@example.com` | Soạn thảo hợp đồng, tạo mới đối tác, gửi yêu cầu duyệt. |
+| **User** | `john@example.com` | Xem danh sách hợp đồng (Chỉ xem, không tác động). |
+
+---
+**Báo Cáo Kỹ Thuật được biên soạn bởi Nhóm Phát triển E-Contract System (Terence-0310).**
