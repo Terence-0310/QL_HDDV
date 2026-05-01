@@ -23,7 +23,9 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
   const isAuthenticated = Boolean(token && isLikelyActiveJwt(token));
 
-  if (pathname === "/" && !isAuthenticated) {
+  const isProtectedPath = pathname === "/" || pathname.startsWith("/admin") || pathname.startsWith("/notifications");
+
+  if (isProtectedPath && !isAuthenticated) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -35,5 +37,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/login", "/register"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

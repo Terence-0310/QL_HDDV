@@ -23,9 +23,14 @@ async function fetchCurrentUser(): Promise<AuthUser | null> {
       cacheHydrated = true;
       return data;
     })
-    .catch(() => {
+    .catch((err) => {
       cachedUser = null;
       cacheHydrated = true;
+      if (err && typeof err === "object" && "status" in err && err.status === 401) {
+        if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+      }
       return null;
     })
     .finally(() => {

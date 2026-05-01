@@ -20,6 +20,10 @@ export async function GET(request: NextRequest) {
     }
     return response;
   } catch (error) {
-    return handleRouteError(error);
+    const response = handleRouteError(error);
+    if (response.status === 401) {
+      response.cookies.delete("auth_token");
+    }
+    return response;
   }
 }
