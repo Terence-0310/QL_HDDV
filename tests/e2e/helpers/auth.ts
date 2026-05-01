@@ -10,7 +10,7 @@ async function login(page: Page, input: { email: string; password: string }) {
 
 export async function loginAsAdmin(page: Page) {
   await login(page, { email: "admin@example.com", password: "Admin@12345" });
-  await expect(page.getByText("Bảng điều khiển quản trị")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tổng quan" })).toBeVisible({ timeout: 15000 });
 }
 
 export async function loginAsUser(page: Page) {

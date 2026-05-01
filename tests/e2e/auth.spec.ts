@@ -7,7 +7,7 @@ test.describe("auth & permission", () => {
 
     await page.goto("/admin/dashboard");
     await expect(page.getByText("Bạn không có quyền truy cập trang này.")).toBeVisible();
-    await expect(page.getByText("Bảng điều khiển quản trị")).not.toBeVisible();
+    await expect(page.getByRole("heading", { name: "Tổng quan" })).not.toBeVisible();
   });
 
   test("admin đăng nhập thành công", async ({ page }) => {
