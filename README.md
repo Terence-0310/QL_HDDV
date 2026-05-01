@@ -41,37 +41,39 @@ Dự án được xây dựng trên nền tảng kiến trúc **Monolithic Moder
 Hệ thống phân cấp quyền hạn thành 4 nhóm đối tượng chính, mỗi đối tượng có một giới hạn chức năng cụ thể nhằm đảm bảo tính bảo mật và tính chuyên trách của doanh nghiệp.
 
 ```mermaid
-usecaseDiagram
-    actor Hệ_thống_Tự_động as "Hệ Thống (Background Worker)"
+flowchart LR
+    %% Actors (Được biểu diễn bằng hình tròn)
+    System(("Hệ Thống\n(Background Worker)"))
+    User(("User\n(Người dùng cơ bản)"))
+    Staff(("Staff\n(Nhân viên)"))
+    Admin(("Admin\n(Quản lý/Trưởng phòng)"))
+    SuperAdmin(("Super Admin\n(Quản trị hệ thống)"))
+
+    %% Usecases (Được biểu diễn bằng hình viên thuốc)
+    UC_Auth([Đăng nhập / Đăng xuất])
+    UC_Dashboard([Xem bảng tin cá nhân])
+    UC_ViewContracts([Xem danh sách hợp đồng & Tải file])
+    UC_Notifications([Nhận thông báo hệ thống])
     
-    actor User as "User (Người dùng cơ bản)"
-    actor Staff as "Staff (Nhân viên)"
-    actor Admin as "Admin (Quản lý/Trưởng phòng)"
-    actor SuperAdmin as "Super Admin (Quản trị hệ thống)"
-    
-    User <|-- Staff
-    Staff <|-- Admin
-    Admin <|-- SuperAdmin
+    UC_CreateContract([Tạo mới hợp đồng])
+    UC_EditContract([Chỉnh sửa hợp đồng nháp])
+    UC_Submit([Gửi trình duyệt hợp đồng])
 
-    usecase "Đăng nhập / Đăng xuất" as UC_Auth
-    usecase "Xem bảng tin (Dashboard) cá nhân" as UC_Dashboard
-    usecase "Xem danh sách hợp đồng & Tải file" as UC_ViewContracts
-    usecase "Nhận thông báo hệ thống" as UC_Notifications
-    
-    usecase "Tạo mới hợp đồng" as UC_CreateContract
-    usecase "Chỉnh sửa hợp đồng (Bản nháp)" as UC_EditContract
-    usecase "Gửi trình duyệt hợp đồng" as UC_Submit
+    UC_Approve([Phê duyệt / Từ chối hàng loạt])
+    UC_ViewReports([Xem báo cáo thống kê toàn cảnh])
+    UC_Export([Xuất báo cáo Excel/CSV])
 
-    usecase "Phê duyệt / Từ chối (Hàng loạt)" as UC_Approve
-    usecase "Xem báo cáo thống kê toàn cảnh" as UC_ViewReports
-    usecase "Xuất báo cáo Excel/CSV" as UC_Export
+    UC_ManageUsers([Quản lý Tài khoản])
+    UC_AssignRoles([Phân quyền User])
+    UC_AuditLogs([Tra cứu lịch sử kiểm toán])
 
-    usecase "Quản lý Tài khoản (Thêm/Sửa/Khoá)" as UC_ManageUsers
-    usecase "Phân quyền User" as UC_AssignRoles
-    usecase "Tra cứu lịch sử kiểm toán (Audit Logs)" as UC_AuditLogs
+    UC_Scan([Quét hợp đồng sắp hết hạn])
+    UC_SendEmail([Đẩy Job gửi Email nhắc nhở])
 
-    usecase "Quét hợp đồng sắp hết hạn" as UC_Scan
-    usecase "Đẩy Job gửi Email nhắc nhở" as UC_SendEmail
+    %% Phân cấp quyền (Mũi tên đứt nét)
+    SuperAdmin -.-> Admin
+    Admin -.-> Staff
+    Staff -.-> User
 
     %% Kết nối Actor với Usecase
     User --> UC_Auth
@@ -91,8 +93,8 @@ usecaseDiagram
     SuperAdmin --> UC_AssignRoles
     SuperAdmin --> UC_AuditLogs
 
-    Hệ_thống_Tự_động --> UC_Scan
-    Hệ_thống_Tự_động --> UC_SendEmail
+    System --> UC_Scan
+    System --> UC_SendEmail
 ```
 
 ### Chi tiết các phân hệ:
