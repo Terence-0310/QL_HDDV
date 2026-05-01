@@ -11,7 +11,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: [["list"]],
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3002",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -19,8 +19,8 @@ export default defineConfig({
   },
   globalSetup: "./tests/e2e/global-setup",
   webServer: {
-    command: "npm run dev -- -p 3000",
-    url: "http://localhost:3000",
+    command: "npm run dev -- -p 3002",
+    url: "http://localhost:3002",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

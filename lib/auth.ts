@@ -5,7 +5,7 @@ import { verifyAuthToken } from "@/lib/jwt";
 import { AppError } from "@/lib/errors";
 import type { AuthUser } from "@/types/auth";
 
-export const AUTH_COOKIE_NAME = "auth_token";
+export const AUTH_COOKIE_NAME = "hms_auth_session";
 
 function getTokenFromRequest(request: NextRequest): string | null {
   const cookieToken = request.cookies.get(AUTH_COOKIE_NAME)?.value;
