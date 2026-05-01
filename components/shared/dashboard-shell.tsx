@@ -67,20 +67,72 @@ const navGroups: NavGroup[] = [
 ];
 
 function NotificationBell() {
-  const { data } = useSWR<{ unreadCount: number }>(
+  const [open, setOpen] = useState(false);
+  
+  const { data: countData, mutate: mutateCount } = useSWR<{ unreadCount: number }>(
     "/api/notifications/unread-count",
     apiRequest,
     { refreshInterval: 30_000 }
   );
-  const count = data?.unreadCount ?? 0;
+  
+  const { data: recentData, mutate: mutateRecent } = useSWR<any[]>(
+    open ? "/api/notifications?page=1&pageSize=5" : null,
+    apiRequest
+  );
+
+  const count = countData?.unreadCount ?? 0;
+
+  const handleMarkAllRead = async () => {
+    try {
+      await apiRequest("/api/notifications/read-all", { method: "POST" });
+      mutateCount();
+      mutateRecent();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
-    <Link href="/notifications" style={{ position: "relative", color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center", width: "40px", height: "40px", borderRadius: "50%", background: "var(--bg)" }}>
-      <Bell size={20} />
-      {count > 0 && (
-        <span style={{ position: "absolute", top: "5px", right: "6px", width: "8px", height: "8px", background: "var(--danger)", borderRadius: "50%", border: "2px solid var(--surface)" }} />
+    <div style={{ position: "relative" }}>
+      <button 
+        onClick={() => setOpen(!open)} 
+        style={{ position: "relative", color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center", width: "40px", height: "40px", borderRadius: "50%", background: "var(--bg)", border: "none", cursor: "pointer" }}
+      >
+        <Bell size={20} />
+        {count > 0 && (
+          <span style={{ position: "absolute", top: "5px", right: "6px", width: "8px", height: "8px", background: "var(--danger)", borderRadius: "50%", border: "2px solid var(--surface)" }} />
+        )}
+      </button>
+
+      {open && (
+        <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "0.5rem", width: "320px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-md)", zIndex: 100, overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem", borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
+            <h4 style={{ margin: 0, fontSize: "0.95rem" }}>Thông báo</h4>
+            <button onClick={handleMarkAllRead} style={{ border: "none", background: "transparent", color: "var(--primary)", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600 }}>Đánh dấu đã đọc</button>
+          </div>
+          <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+            {!recentData ? (
+              <div style={{ padding: "1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)" }}>Đang tải...</div>
+            ) : recentData.length === 0 ? (
+              <div style={{ padding: "1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)" }}>Không có thông báo mới</div>
+            ) : (
+              recentData.map((n: any) => (
+                <div key={n.id} style={{ padding: "0.75rem 1rem", borderBottom: "1px solid var(--border)", background: n.isRead ? "transparent" : "#F4ECF7" }}>
+                  <div style={{ fontSize: "0.85rem", fontWeight: n.isRead ? 400 : 600, color: "var(--text)", marginBottom: "0.25rem" }}>{n.title}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{new Date(n.createdAt).toLocaleString("vi-VN")}</div>
+                </div>
+              ))
+            )}
+          </div>
+          <Link href="/notifications" onClick={() => setOpen(false)} style={{ display: "block", textAlign: "center", padding: "0.75rem", fontSize: "0.85rem", color: "var(--primary)", fontWeight: 600, borderTop: "1px solid var(--border)", textDecoration: "none", background: "var(--bg)" }}>
+            Xem tất cả thông báo
+          </Link>
+        </div>
       )}
-    </Link>
+      
+      {/* Click outside overlay */}
+      {open && <div style={{ position: "fixed", inset: 0, zIndex: 90 }} onClick={() => setOpen(false)} />}
+    </div>
   );
 }
 

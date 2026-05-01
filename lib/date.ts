@@ -15,3 +15,9 @@ export function addDaysUtc(date: Date, days: number): Date {
 export function diffInDaysFloor(from: Date, to: Date): number {
   return Math.floor((to.getTime() - from.getTime()) / DAY_MS);
 }
+
+export function parseQueryDate(dateStr: string): Date | undefined {
+  const parsed = new Date(dateStr);
+  if (isNaN(parsed.getTime())) return undefined;
+  return parsed;
+}
