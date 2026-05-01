@@ -127,11 +127,11 @@ async function main() {
       const reminderDate = new Date(endDate);
       reminderDate.setDate(reminderDate.getDate() - offset);
 
-      const milestone = await prisma.reminderMilestone.create({
+      const milestone = await prisma.reminderJob.create({
         data: {
           contractId: contract.id,
-          remindBeforeDays: offset,
-          reminderDate: reminderDate,
+          reminderThresholdDays: offset,
+          scheduledAt: reminderDate,
           recipientEmail: staffUser.email,
           type: "EXPIRING_SOON",
           status: "PENDING"
@@ -143,8 +143,8 @@ async function main() {
         await prisma.notification.create({
           data: {
             userId: staffUser.id,
-            contractId: contract.id,
-            reminderMilestoneId: milestone.id,
+            relatedEntityType: "REMINDER_JOB",
+            relatedEntityId: milestone.id,
             type: NotificationType.REMINDER,
             title: `Sắp đến hạn nhắc: ${contract.code}`,
             message: `Hợp đồng ${contract.title} sắp đến hạn nhắc ${offset} ngày.`,
