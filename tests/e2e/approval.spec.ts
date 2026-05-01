@@ -4,10 +4,18 @@ import { createContractViaApi, makeContractDates, type CreateContractInput } fro
 
 async function apiPost(page: any, input: { url: string; body?: unknown }) {
   return await page.evaluate(async ({ url, body }: { url: string; body?: unknown }) => {
+    function getCookie(name: string) {
+      const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`));
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+    const token = getCookie("csrf_token") || '';
     const res = await fetch(url, {
       method: "POST",
       credentials: "include",
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: {
+        ...(body ? { "Content-Type": "application/json" } : {}),
+        "x-csrf-token": token
+      },
       body: body ? JSON.stringify(body) : undefined,
     });
     return await res.json();

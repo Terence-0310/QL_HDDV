@@ -18,6 +18,7 @@ test.describe("reminder flow (preview + run/enqueue)", () => {
       startDate: dates.startDate,
       endDate: dates.endDate,
       autoRenew: false,
+      reminderThresholdDays: [3],
     };
 
     await createContractViaApi(page, contractInput);
@@ -35,9 +36,14 @@ test.describe("reminder flow (preview + run/enqueue)", () => {
     expect(candidate).toBeTruthy();
 
     const runResp = await page.evaluate(async () => {
+      function getCookie(name: string) {
+        const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`));
+        return match ? decodeURIComponent(match[1]) : null;
+      }
+      const token = getCookie("csrf_token") || '';
       const res = await fetch("/api/reminders/run", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-csrf-token": token },
         credentials: "include",
         body: JSON.stringify({ limit: 50 }),
       });

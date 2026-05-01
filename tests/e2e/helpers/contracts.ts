@@ -14,6 +14,7 @@ export type CreateContractInput = {
   status?: "DRAFT" | "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "TERMINATED";
   renewalReminderDays?: number;
   autoRenew?: boolean;
+  reminderThresholdDays?: number[];
   fileUrl?: string;
   note?: string;
 };
@@ -25,12 +26,12 @@ export async function createContractViaApi(page: Page, input: CreateContractInpu
       const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`));
       return match ? decodeURIComponent(match[1]) : null;
     }
-    const token = getCookie("csrf_token");
+    const csrfToken = getCookie("csrf_token") || '';
     const res = await fetch("/api/contracts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { "x-csrf-token": token } : {}),
+        "x-csrf-token": csrfToken,
       },
       credentials: "include",
       body: JSON.stringify(payload),

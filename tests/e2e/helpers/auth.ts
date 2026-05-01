@@ -15,6 +15,5 @@ export async function loginAsAdmin(page: Page) {
 
 export async function loginAsUser(page: Page) {
   await login(page, { email: "user@example.com", password: "User@12345" });
-  await expect(page.getByRole("button", { name: "Đăng xuất" })).toBeVisible();
+  await page.waitForURL("**/admin/dashboard");
 }
-

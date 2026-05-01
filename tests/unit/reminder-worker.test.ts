@@ -25,6 +25,12 @@ vi.mock("@/lib/prisma", () => ({
     reminderJob: {
       update: (...args: unknown[]) => updateMock(...args),
     },
+    user: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    notification: {
+      createMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
   },
 }));
 
