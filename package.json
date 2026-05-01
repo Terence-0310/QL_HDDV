@@ -1,0 +1,61 @@
+{
+  "name": "contract-management-system",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed:e2e": "tsx prisma/seed.e2e.ts",
+    "worker:reminder": "tsx scripts/reminder-worker.ts",
+    "worker:reminder:daemon": "tsx scripts/reminder-worker-daemon.ts",
+    "worker:scheduler": "tsx scripts/scheduler.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --headed",
+    "perf:baseline": "tsx scripts/perf-benchmark.ts",
+    "perf:verify": "tsx scripts/perf-benchmark.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1040.0",
+    "@prisma/client": "6.6.0",
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.10.0",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^1.14.0",
+    "next": "^15.2.4",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "swr": "^2.4.1",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.14.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^8.0.0",
+    "@types/react": "^19.0.12",
+    "@vitest/coverage-v8": "^4.1.2",
+    "eslint": "^9.23.0",
+    "eslint-config-next": "^15.2.4",
+    "playwright": "^1.59.1",
+    "prisma": "6.6.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.2",
+    "vitest": "^4.1.2"
+  }
+}

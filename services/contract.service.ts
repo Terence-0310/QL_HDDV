@@ -1,0 +1,279 @@
+import { Prisma, UserRole, type Contract } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { getCacheValue, setCacheValue } from "@/lib/simple-cache";
+import { toCacheKey } from "@/lib/cache-key";
+import { AppError } from "@/lib/errors";
+import { createAuditLog } from "@/services/audit.service";
+import type { AuthUser } from "@/types/auth";
+import type { ContractListResult, CreateContractInput, ListContractsInput, UpdateContractInput } from "@/types/contract";
+
+type ContractListItem = Contract;
+
+function normalizeReminderThresholdDays(input?: number[]): string | undefined {
+  if (!input || input.length === 0) return undefined;
+  const unique = Array.from(new Set(input.filter((value) => Number.isInteger(value) && value > 0))).sort((a, b) => b - a);
+  if (!unique.length) return undefined;
+  return unique.join(",");
+}
+
+function mapContractResponse(contract: Contract): Contract {
+  return contract;
+}
+
+function assertContractAccess(contractOwnerId: string, authUser: AuthUser) {
+  if (authUser.role === UserRole.ADMIN) return;
+  if (contractOwnerId !== authUser.id) {
+    throw new AppError("You do not have access to this contract", 403, "FORBIDDEN");
+  }
+}
+
+export async function assertContractAccessById(contractId: string, authUser: AuthUser): Promise<Contract> {
+  const existing = await prisma.contract.findUnique({ where: { id: contractId } });
+  if (!existing) throw new AppError("Contract not found", 404, "NOT_FOUND");
+  assertContractAccess(existing.ownerId, authUser);
+  return existing;
+}
+
+function buildContractListWhereClause(input: ListContractsInput, authUser: AuthUser): Prisma.ContractWhereInput {
+  const dateFilters: Prisma.ContractWhereInput = {};
+
+  if (input.startDateFrom || input.startDateTo) {
+    dateFilters.startDate = {
+      gte: input.startDateFrom,
+      lte: input.startDateTo,
+    };
+  }
+
+  if (input.endDateFrom || input.endDateTo) {
+    dateFilters.endDate = {
+      gte: input.endDateFrom,
+      lte: input.endDateTo,
+    };
+  }
+
+  return {
+    ...dateFilters,
+    status: input.status,
+    autoRenew: input.autoRenew,
+    ownerId: authUser.role === UserRole.ADMIN ? input.ownerId : authUser.id,
+    OR: input.search
+      ? [
+          { title: { contains: input.search } },
+          { code: { contains: input.search } },
+          { partnerName: { contains: input.search } },
+          { partnerEmail: { contains: input.search } },
+        ]
+      : undefined,
+  };
+}
+
+function buildContractListOrderBy(
+  input: ListContractsInput,
+): Prisma.ContractOrderByWithRelationInput {
+  const sortBy = input.sortBy ?? "createdAt";
+  const sortOrder = input.sortOrder ?? "desc";
+  return { [sortBy]: sortOrder };
+}
+
+function handleContractServiceError(error: unknown): never {
+  if (error instanceof AppError) throw error;
+  if (error && typeof error === "object" && "code" in error && (error as { code?: string }).code === "P2002") {
+    throw new AppError("Contract code already exists", 409, "CONFLICT");
+  }
+  throw new AppError("Unable to process contract request", 500, "INTERNAL_ERROR");
+}
+
+export async function createContract(input: CreateContractInput, authUser: AuthUser): Promise<Contract> {
+  try {
+    const ownerId = authUser.role === UserRole.ADMIN && input.ownerId ? input.ownerId : authUser.id;
+    const { reminderThresholdDays, ...restInput } = input;
+    const reminderOffsets = normalizeReminderThresholdDays(input.reminderThresholdDays);
+    const created = await prisma.contract.create({
+      data: {
+        ...restInput,
+        ownerId,
+        code: restInput.code.trim(),
+        renewalReminderDays: input.renewalReminderDays ?? 7,
+        reminderOffsets: reminderOffsets ?? "7,15,30",
+        autoRenew: input.autoRenew ?? false,
+      },
+    });
+
+    await createAuditLog({
+      userId: authUser.id,
+      action: "CONTRACT_CREATE",
+      entityType: "CONTRACT",
+      entityId: created.id,
+      metadata: { code: created.code, ownerId: created.ownerId },
+    });
+
+    return mapContractResponse(created);
+  } catch (error) {
+    handleContractServiceError(error);
+  }
+}
+
+export async function updateContract(contractId: string, input: UpdateContractInput, authUser: AuthUser): Promise<Contract> {
+  try {
+    await assertContractAccessById(contractId, authUser);
+    const { reminderThresholdDays, ...restInput } = input;
+    const reminderOffsets = normalizeReminderThresholdDays(input.reminderThresholdDays);
+
+    const updated = await prisma.contract.update({
+      where: { id: contractId },
+      data: {
+        ...restInput,
+        code: restInput.code?.trim(),
+        reminderOffsets,
+      },
+    });
+
+    await createAuditLog({
+      userId: authUser.id,
+      action: "CONTRACT_UPDATE",
+      entityType: "CONTRACT",
+      entityId: updated.id,
+      metadata: { code: updated.code },
+    });
+
+    return mapContractResponse(updated);
+  } catch (error) {
+    handleContractServiceError(error);
+  }
+}
+
+export async function deleteContract(contractId: string, authUser: AuthUser): Promise<void> {
+  try {
+    const existing = await assertContractAccessById(contractId, authUser);
+
+    const deleted = await prisma.contract.delete({ where: { id: contractId } });
+    await createAuditLog({
+      userId: authUser.id,
+      action: "CONTRACT_DELETE",
+      entityType: "CONTRACT",
+      entityId: deleted.id,
+      metadata: { code: deleted.code },
+    });
+  } catch (error) {
+    handleContractServiceError(error);
+  }
+}
+
+export async function getContractById(contractId: string, authUser: AuthUser) {
+  const contract = await prisma.contract.findUnique({
+    where: { id: contractId },
+    include: {
+      owner: { select: { id: true, name: true, email: true, role: true } },
+      approvedBy: { select: { id: true, name: true, email: true, role: true } },
+      parentContract: { select: { id: true, code: true, title: true } },
+      renewedContracts: {
+        select: { id: true, code: true, title: true, renewalVersion: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      },
+      reminderLogs: {
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      },
+    },
+  });
+
+  if (!contract) throw new AppError("Contract not found", 404, "NOT_FOUND");
+  assertContractAccess(contract.ownerId, authUser);
+  return {
+    id: contract.id,
+    code: contract.code,
+    title: contract.title,
+    partnerName: contract.partnerName,
+    partnerEmail: contract.partnerEmail,
+    description: contract.description,
+    value: contract.value,
+    startDate: contract.startDate,
+    endDate: contract.endDate,
+    signedDate: contract.signedDate,
+    status: contract.status,
+    renewalReminderDays: contract.renewalReminderDays,
+    autoRenew: contract.autoRenew,
+    note: contract.note,
+    fileUrl: contract.fileUrl,
+    fileName: contract.fileName,
+    originalFileName: contract.originalFileName,
+    fileMimeType: contract.fileMimeType,
+    fileSize: contract.fileSize,
+    uploadedAt: contract.uploadedAt,
+    parentContract: contract.parentContract,
+    renewalVersion: contract.renewalVersion,
+    renewedAt: contract.renewedAt,
+    approvalStatus: contract.approvalStatus,
+    submittedForApprovalAt: contract.submittedForApprovalAt,
+    approvedAt: contract.approvedAt,
+    rejectedAt: contract.rejectedAt,
+    rejectionReason: contract.rejectionReason,
+    approvedBy: contract.approvedBy,
+    renewedContracts: contract.renewedContracts,
+    owner: contract.owner,
+    reminderSummary: {
+      totalLogs: contract.reminderLogs.length,
+      latestLogAt: contract.reminderLogs[0]?.createdAt ?? null,
+    },
+    createdAt: contract.createdAt,
+    updatedAt: contract.updatedAt,
+  };
+}
+
+export async function listContracts(
+  input: ListContractsInput,
+  authUser: AuthUser,
+): Promise<ContractListResult<ContractListItem>> {
+  const page = Math.max(input.page ?? 1, 1);
+  const pageSize = Math.min(Math.max(input.pageSize ?? 20, 1), 100);
+  const skip = (page - 1) * pageSize;
+  const where = buildContractListWhereClause(input, authUser);
+
+  const cacheKey = toCacheKey("contracts:list", { authUserId: authUser.id, role: authUser.role, input: { ...input, page, pageSize } });
+  const cached = getCacheValue<ContractListResult<ContractListItem>>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const [items, total] = await prisma.$transaction([
+    prisma.contract.findMany({
+      where,
+      orderBy: buildContractListOrderBy(input),
+      skip,
+      take: pageSize,
+    }),
+    prisma.contract.count({ where }),
+  ]);
+
+  const result = {
+    items: items.map(mapContractResponse),
+    page,
+    pageSize,
+    total,
+    totalPages: Math.max(Math.ceil(total / pageSize), 1),
+  };
+  setCacheValue(cacheKey, result, 10_000);
+  return result;
+}
+
+export async function updateContractFileMetadata(
+  contractId: string,
+  input: Pick<
+    Contract,
+    "fileUrl" | "fileName" | "originalFileName" | "fileMimeType" | "fileSize" | "uploadedAt"
+  >,
+) {
+  return prisma.contract.update({
+    where: { id: contractId },
+    data: input,
+    select: {
+      id: true,
+      fileUrl: true,
+      fileName: true,
+      originalFileName: true,
+      fileMimeType: true,
+      fileSize: true,
+      uploadedAt: true,
+    },
+  });
+}

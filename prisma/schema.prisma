@@ -1,0 +1,316 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  TERMINATED
+  RENEWED
+}
+
+enum PartnerType {
+  CUSTOMER
+  SUPPLIER
+  OTHER
+}
+
+enum PartnerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ReminderType {
+  EXPIRING_SOON
+  EXPIRED
+  RENEWAL_NOTICE
+}
+
+enum ReminderSendStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum ReminderJobStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  DEAD_LETTER
+  CANCELLED
+}
+
+enum ApprovalStatus {
+  NOT_SUBMITTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalAction {
+  SUBMIT
+  APPROVE
+  REJECT
+  CANCEL
+}
+
+enum NotificationType {
+  REMINDER
+  REMINDER_FAILED
+  CONTRACT_RENEWED
+  CONTRACT_EXPIRING
+  CONTRACT_EXPIRED
+  SYSTEM
+  EMAIL
+}
+
+enum NotificationEntityType {
+  CONTRACT
+  REMINDER_JOB
+  SYSTEM
+}
+
+model User {
+  id           String     @id @default(cuid())
+  username     String?    @unique
+  name         String     @map("fullName")
+  email        String     @unique
+  phone        String?
+  passwordHash String     @map("password")
+  role         UserRole   @default(USER)
+  status       UserStatus @default(ACTIVE)
+  contracts    Contract[]
+  approvedContracts Contract[] @relation("ContractApprovedBy")
+  approvalHistories ContractApprovalHistory[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([createdAt])
+  @@index([status])
+  @@map("User")
+}
+
+model Partner {
+  id             String     @id @default(cuid())
+  name           String
+  partnerType    PartnerType @default(OTHER)
+  taxCode        String?
+  address        String?
+  email          String?
+  phone          String?
+  representative String?
+  description    String?
+  status         PartnerStatus @default(ACTIVE)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  contracts      Contract[]
+
+  @@map("Partner")
+}
+
+model ContractType {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  contracts   Contract[]
+
+  @@map("ContractType")
+}
+
+model Contract {
+  id                  String         @id @default(cuid())
+  code                String         @unique @map("contractCode")
+  title               String
+  
+  partnerId           String?
+  partner             Partner?       @relation(fields: [partnerId], references: [id])
+  contractTypeId      String?
+  contractType        ContractType?  @relation(fields: [contractTypeId], references: [id])
+  
+  partnerName         String
+  partnerEmail        String?
+  description         String?
+  value               Float          @map("contractValue")
+  startDate           DateTime       @map("effectiveDate")
+  endDate             DateTime       @map("expiredDate")
+  signedDate          DateTime?
+  status              ContractStatus @default(DRAFT)
+  renewalReminderDays Int            @default(7)
+  reminderOffsets     String         @default("7,15,30")
+  autoRenew           Boolean        @default(false)
+  fileUrl             String?
+  fileName            String?
+  originalFileName    String?
+  fileMimeType        String?
+  fileSize            Int?
+  uploadedAt          DateTime?
+  note                String?
+  ownerId             String         @map("createdByUserId")
+  owner               User           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  approvalStatus      ApprovalStatus @default(NOT_SUBMITTED)
+  submittedForApprovalAt DateTime?
+  approvedAt          DateTime?
+  rejectedAt          DateTime?
+  approvedById        String?
+  approvedBy          User?          @relation("ContractApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  rejectionReason     String?
+  parentContractId    String?
+  parentContract      Contract?      @relation("ContractRenewals", fields: [parentContractId], references: [id], onDelete: SetNull)
+  renewedContracts    Contract[]     @relation("ContractRenewals")
+  renewalVersion      Int            @default(1)
+  renewedAt           DateTime?
+  reminderLogs        ReminderLog[]
+  reminderJobs        ReminderJob[]
+  approvalHistories   ContractApprovalHistory[]
+  contractFiles       ContractFile[]
+  auditLogs           AuditLog[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@index([endDate])
+  @@index([startDate])
+  @@index([createdAt])
+  @@index([autoRenew])
+  @@index([status])
+  @@index([ownerId])
+  @@index([approvalStatus])
+  @@index([approvalStatus, submittedForApprovalAt])
+  @@index([approvedById])
+  @@index([parentContractId])
+  @@index([ownerId, createdAt])
+  @@index([ownerId, status])
+  @@index([ownerId, approvalStatus])
+  @@index([status, createdAt])
+  @@index([approvalStatus, createdAt])
+  @@map("Contract")
+}
+
+model ContractFile {
+  id          String   @id @default(cuid())
+  contractId  String
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileType    String?
+  filePath    String
+  fileSize    Int?
+  description String?
+  uploadedAt  DateTime @default(now())
+
+  @@map("ContractFile")
+}
+
+model ReminderJob {
+  id            String            @id @default(cuid())
+  contractId    String
+  contract      Contract          @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  recipientEmail String
+  type          ReminderType
+  status        ReminderJobStatus @default(PENDING)
+  attempts      Int               @default(0)
+  maxAttempts   Int               @default(3)
+  scheduledAt   DateTime          @default(now()) @map("reminderDate")
+  nextAttemptAt DateTime          @default(now())
+  processingAt  DateTime?
+  processedAt   DateTime?         @map("sentAt")
+  errorMessage  String?
+  payload       Json?
+  reminderThresholdDays Int?      @map("remindBeforeDays")
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([contractId, type, createdAt])
+  @@map("ReminderMilestone")
+}
+
+model ReminderLog {
+  id           String             @id @default(cuid())
+  contractId   String
+  contract     Contract           @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  reminderType ReminderType
+  sentTo       String
+  sentAt       DateTime?
+  status       ReminderSendStatus @default(PENDING)
+  reminderThresholdDays Int?
+  message      String?
+  createdAt    DateTime           @default(now())
+
+  @@index([contractId])
+  @@index([contractId, reminderType, reminderThresholdDays, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contractId String?
+  contract   Contract? @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  action     String
+  entityType String
+  entityId   String
+  metadata   String?  @map("content")
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([entityType, entityId])
+  @@map("ActivityLog")
+}
+
+model Notification {
+  id                String                 @id @default(cuid())
+  userId            String
+  user              User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              NotificationType
+  title             String
+  message           String                 @map("content")
+  isRead            Boolean                @default(false)
+  readAt            DateTime?
+  relatedEntityType NotificationEntityType?
+  relatedEntityId   String?
+  createdAt         DateTime               @default(now())
+
+  @@index([userId, isRead, createdAt])
+  @@index([relatedEntityType, relatedEntityId])
+  @@map("Notification")
+}
+
+model ContractApprovalHistory {
+  id          String         @id @default(cuid())
+  contractId  String
+  contract    Contract       @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  actorId     String
+  actor       User           @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action      ApprovalAction
+  reason      String?
+  step        Int            @default(1)
+  createdAt   DateTime       @default(now())
+
+  @@index([contractId, createdAt])
+  @@index([actorId])
+}
