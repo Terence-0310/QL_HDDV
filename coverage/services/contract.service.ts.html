@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/71</span>
+                <span class='fraction'>0/77</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/58</span>
+                <span class='fraction'>0/63</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/63</span>
+                <span class='fraction'>0/69</span>
             </div>
         
             
@@ -342,7 +342,16 @@
 <a name='L277'></a><a href='#L277'>277</a>
 <a name='L278'></a><a href='#L278'>278</a>
 <a name='L279'></a><a href='#L279'>279</a>
-<a name='L280'></a><a href='#L280'>280</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a>
+<a name='L285'></a><a href='#L285'>285</a>
+<a name='L286'></a><a href='#L286'>286</a>
+<a name='L287'></a><a href='#L287'>287</a>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -452,6 +461,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -481,6 +493,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -498,6 +513,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -623,7 +641,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Prisma, UserRole, type Contract } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCacheValue, setCacheValue } from "@/lib/simple-cache";
+import { getCacheValue, setCacheValue, invalidateCacheByPrefix } from "@/lib/simple-cache";
 import { toCacheKey } from "@/lib/cache-key";
 import { AppError } from "@/lib/errors";
 import { createAuditLog } from "@/services/audit.service";
@@ -644,7 +662,7 @@ function <span class="fstat-no" title="function not covered" >mapContractRespons
 }
 &nbsp;
 function <span class="fstat-no" title="function not covered" >assertContractAccess(c</span>ontractOwnerId: string, authUser: AuthUser) {
-<span class="cstat-no" title="statement not covered" >  if (authUser.role === UserRole.ADMIN) <span class="cstat-no" title="statement not covered" >return;</span></span>
+<span class="cstat-no" title="statement not covered" >  if (authUser.role === UserRole.ADMIN || authUser.role === UserRole.SUPER_ADMIN) <span class="cstat-no" title="statement not covered" >return;</span></span>
 <span class="cstat-no" title="statement not covered" >  if (contractOwnerId !== authUser.id) {</span>
 <span class="cstat-no" title="statement not covered" >    throw new AppError("You do not have access to this contract", 403, "FORBIDDEN");</span>
   }
@@ -678,7 +696,7 @@ function <span class="fstat-no" title="function not covered" >buildContractListW
     ...dateFilters,
     status: input.status,
     autoRenew: input.autoRenew,
-    ownerId: authUser.role === UserRole.ADMIN ? input.ownerId : authUser.id,
+    ownerId: (authUser.role === UserRole.ADMIN || authUser.role === UserRole.SUPER_ADMIN) ? input.ownerId : authUser.id,
     OR: input.search
       ? [
           { title: { contains: input.search } },
@@ -708,7 +726,7 @@ function <span class="fstat-no" title="function not covered" >handleContractServ
 &nbsp;
 export async function <span class="fstat-no" title="function not covered" >createContract(i</span>nput: CreateContractInput, authUser: AuthUser): Promise&lt;Contract&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
-    const ownerId = <span class="cstat-no" title="statement not covered" >authUser.role === UserRole.ADMIN &amp;&amp; input.ownerId ? input.ownerId : authUser.id;</span>
+    const <span class="cstat-no" title="statement not covered" >ownerId = (authUser.role === UserRole.ADMIN || authUser.role === UserRole.SUPER_ADMIN) &amp;&amp; input.ownerId ? input.ownerId : authUser.id;</span>
     const { reminderThresholdDays, ...restInput } = <span class="cstat-no" title="statement not covered" >input;</span>
     const reminderOffsets = <span class="cstat-no" title="statement not covered" >normalizeReminderThresholdDays(input.reminderThresholdDays);</span>
     const created = <span class="cstat-no" title="statement not covered" >await prisma.contract.create({</span>
@@ -729,6 +747,9 @@ export async function <span class="fstat-no" title="function not covered" >creat
       entityId: created.id,
       metadata: { code: created.code, ownerId: created.ownerId },
     });
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    invalidateCacheByPrefix("contracts:list");</span>
+<span class="cstat-no" title="statement not covered" >    invalidateCacheByPrefix("admin:contracts:list");</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return mapContractResponse(created);</span>
   } catch (error) {
@@ -759,6 +780,9 @@ export async function <span class="fstat-no" title="function not covered" >updat
       metadata: { code: updated.code },
     });
 &nbsp;
+<span class="cstat-no" title="statement not covered" >    invalidateCacheByPrefix("contracts:list");</span>
+<span class="cstat-no" title="statement not covered" >    invalidateCacheByPrefix("admin:contracts:list");</span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    return mapContractResponse(updated);</span>
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    handleContractServiceError(error);</span>
@@ -777,6 +801,9 @@ export async function <span class="fstat-no" title="function not covered" >delet
       entityId: deleted.id,
       metadata: { code: deleted.code },
     });
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    invalidateCacheByPrefix("contracts:list");</span>
+<span class="cstat-no" title="statement not covered" >    invalidateCacheByPrefix("admin:contracts:list");</span>
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    handleContractServiceError(error);</span>
   }
@@ -907,7 +934,7 @@ export async function <span class="fstat-no" title="function not covered" >updat
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-01T08:15:56.050Z
+                at 2026-05-01T18:43:24.780Z
             </div>
         <script src="../prettify.js"></script>
         <script>

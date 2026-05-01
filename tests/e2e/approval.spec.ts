@@ -74,31 +74,33 @@ test.describe("approval flow (submit -> approve/reject)", () => {
 
     // Approve the first contract.
     await page.goto("/admin/approvals");
-    await page.getByPlaceholder("Tìm theo mã, tên hoặc đối tác").fill(approveCode);
-    await page.getByRole("button", { name: "Tìm kiếm" }).click();
+    await page.getByPlaceholder("Tìm kiếm theo mã, tên hoặc đối tác...").fill(approveCode);
 
     const approveRow = page.locator("table tbody tr", { hasText: approveCode }).first();
-    await expect(approveRow.getByRole("button", { name: "Phê duyệt" })).toBeVisible();
+    await expect(approveRow.getByRole("button", { name: "Duyệt", exact: true })).toBeVisible();
+    await approveRow.getByRole("button", { name: "Duyệt", exact: true }).click();
+    
     const approveResp = page.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/contracts/${approveContract.id}/approve`) && resp.request().method() === "POST" && resp.status() === 200,
     );
-    await approveRow.getByRole("button", { name: "Phê duyệt" }).click();
+    await page.getByRole("button", { name: "Xác nhận phê duyệt" }).click();
     await approveResp;
 
     // Reject the second contract.
     await page.goto("/admin/approvals");
-    await page.getByPlaceholder("Tìm theo mã, tên hoặc đối tác").fill(rejectCode);
-    await page.getByRole("button", { name: "Tìm kiếm" }).click();
+    await page.getByPlaceholder("Tìm kiếm theo mã, tên hoặc đối tác...").fill(rejectCode);
 
     const rejectRow = page.locator("table tbody tr", { hasText: rejectCode }).first();
-    // window.prompt() opens a blocking dialog; accept it immediately after click.
+    await rejectRow.getByRole("button", { name: "Từ chối" }).click();
+
+    await page.getByPlaceholder("Nhập lý do từ chối (bắt buộc)...").fill("Từ chối vì lý do E2E");
+
     const rejectResp = page.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/contracts/${rejectContract.id}/reject`) && resp.request().method() === "POST" && resp.status() === 200,
     );
-    page.once("dialog", (dialog) => dialog.accept("Từ chối vì lý do E2E"));
-    await rejectRow.getByRole("button", { name: "Từ chối" }).click();
+    await page.getByRole("button", { name: "Xác nhận từ chối" }).click();
     await rejectResp;
 
     // Verify final statuses via API.

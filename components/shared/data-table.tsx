@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 type Column<T> = {
   key: string;
-  header: string;
+  header: ReactNode;
   render: (row: T) => ReactNode;
   width?: string;
   minWidth?: string;
