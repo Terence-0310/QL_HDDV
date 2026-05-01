@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
     const to = toStr ? parseQueryDate(toStr) : undefined;
 
     const data = await getDashboardSummary(authUser, from, to);
-    return successResponse("Dashboard summary fetched successfully", data);
+    const response = successResponse("Dashboard summary fetched successfully", data);
+    response.headers.set("Cache-Control", "public, s-maxage=30, stale-while-revalidate=60");
+    return response;
   } catch (error) {
     return handleRouteError(error);
   }

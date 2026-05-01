@@ -2,12 +2,15 @@
 
 import type { ReactNode } from "react";
 
+import Link from "next/link";
+
 type StatCardProps = {
   label: string;
   value: number | string;
   hint?: string;
   tone?: "default" | "success" | "warning" | "danger" | "info";
   icon?: ReactNode;
+  href?: string;
 };
 
 function resolveTone(tone: StatCardProps["tone"]) {
@@ -46,13 +49,17 @@ function resolveTone(tone: StatCardProps["tone"]) {
   };
 }
 
-export function StatCard({ label, value, hint, tone = "default", icon }: StatCardProps) {
+export function StatCard({ label, value, hint, tone = "default", icon, href }: StatCardProps) {
   const colors = resolveTone(tone);
 
-  return (
+  const cardContent = (
     <div 
-      className="stat-card group"
-      style={{ background: colors.bg }}
+      className={`stat-card group ${href ? 'hover-scale' : ''}`}
+      style={{ 
+        background: colors.bg,
+        cursor: href ? "pointer" : "default",
+        transition: "all 0.2s ease"
+      }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <p className="stat-card-label">{label}</p>
@@ -92,4 +99,14 @@ export function StatCard({ label, value, hint, tone = "default", icon }: StatCar
       />
     </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} style={{ textDecoration: "none", display: "block", color: "inherit" }}>
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return cardContent;
 }

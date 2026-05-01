@@ -14,12 +14,14 @@ export async function GET(request: NextRequest) {
     });
 
     const data = await listNotifications(parsed, authUser);
-    return successResponse("Notifications fetched successfully", data.items, {
+    const response = successResponse("Notifications fetched successfully", data.items, {
       page: data.page,
       pageSize: data.pageSize,
       totalItems: data.total,
       totalPages: data.totalPages,
     });
+    response.headers.set("Cache-Control", "private, max-age=10, stale-while-revalidate=30");
+    return response;
   } catch (error) {
     return handleRouteError(error);
   }

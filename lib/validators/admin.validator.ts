@@ -26,6 +26,14 @@ export const adminUpdateUserSchema = z
     message: "At least one field (role or status) must be provided",
   });
 
+export const adminCreateUserSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  role: z.nativeEnum(UserRole).default(UserRole.USER),
+  status: z.nativeEnum(UserStatus).default(UserStatus.ACTIVE),
+});
+
 export const adminContractsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),

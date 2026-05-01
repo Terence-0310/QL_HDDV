@@ -1,6 +1,7 @@
 import { ApprovalStatus, ContractStatus, NotificationEntityType, NotificationType } from "@prisma/client";
 import { AppError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+import { invalidateCacheByPrefix } from "@/lib/simple-cache";
 import { createAuditLog } from "@/services/audit.service";
 import { createNotification } from "@/services/notification.service";
 import { assertContractAccessById } from "@/services/contract.service";
@@ -52,7 +53,7 @@ export async function submitForApproval(contractId: string, authUser: AuthUser) 
   });
 
   const admins = await prisma.user.findMany({
-    where: { role: "ADMIN", status: "ACTIVE" },
+    where: { role: { in: ["ADMIN", "SUPER_ADMIN"] }, status: "ACTIVE" },
     select: { id: true },
   });
 
@@ -78,6 +79,9 @@ export async function submitForApproval(contractId: string, authUser: AuthUser) 
       code: updated.code,
     },
   });
+
+  invalidateCacheByPrefix("contracts:list");
+  invalidateCacheByPrefix("admin:contracts:list");
 
   return updated;
 }
@@ -130,6 +134,9 @@ export async function approveContract(contractId: string, authUser: AuthUser) {
     },
   });
 
+  invalidateCacheByPrefix("contracts:list");
+  invalidateCacheByPrefix("admin:contracts:list");
+
   return updated;
 }
 
@@ -181,6 +188,9 @@ export async function rejectContract(contractId: string, reason: string, authUse
       reason,
     },
   });
+
+  invalidateCacheByPrefix("contracts:list");
+  invalidateCacheByPrefix("admin:contracts:list");
 
   return updated;
 }

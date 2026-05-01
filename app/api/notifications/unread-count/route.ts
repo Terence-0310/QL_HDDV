@@ -7,7 +7,9 @@ export async function GET(request: NextRequest) {
   try {
     const authUser = await requirePermission(request, "notification.view");
     const data = await getUnreadCount(authUser);
-    return successResponse("Unread notification count fetched successfully", data);
+    const response = successResponse("Unread notification count fetched successfully", data);
+    response.headers.set("Cache-Control", "private, max-age=5, stale-while-revalidate=15");
+    return response;
   } catch (error) {
     return handleRouteError(error);
   }

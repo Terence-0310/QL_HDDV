@@ -1,8 +1,10 @@
 import { NextRequest } from "next/server";
 import { handleRouteError, successResponse } from "@/lib/api-response";
 import { requirePermission } from "@/lib/permissions";
-import { adminUserListQuerySchema } from "@/lib/validators/admin.validator";
-import { listUsers } from "@/services/admin.service";
+import { adminUserListQuerySchema, adminCreateUserSchema } from "@/lib/validators/admin.validator";
+import { listUsers, createUser } from "@/services/admin.service";
+import { assertRateLimit } from "@/lib/rate-limit";
+import { assertCsrf } from "@/lib/csrf";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,6 +24,20 @@ export async function GET(request: NextRequest) {
       totalItems: data.total,
       totalPages: data.totalPages,
     });
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    assertRateLimit(request, "admin:users:create", { limit: 10, windowMs: 60_000 });
+    assertCsrf(request);
+    const authUser = await requirePermission(request, "user.manage");
+    const body = await request.json();
+    const parsed = adminCreateUserSchema.parse(body);
+    const data = await createUser(parsed, authUser);
+    return successResponse("User created successfully", data);
   } catch (error) {
     return handleRouteError(error);
   }

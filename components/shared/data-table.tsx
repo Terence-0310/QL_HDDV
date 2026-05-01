@@ -6,6 +6,8 @@ type Column<T> = {
   key: string;
   header: string;
   render: (row: T) => ReactNode;
+  width?: string;
+  minWidth?: string;
 };
 
 type Props<T> = {
@@ -16,7 +18,7 @@ type Props<T> = {
 export function DataTable<T>({ columns, rows }: Props<T>) {
   return (
     <div className="card" style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "860px" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1000px" }}>
         <thead>
           <tr style={{ background: "var(--surface-muted)" }}>
             {columns.map((column) => (
@@ -29,6 +31,8 @@ export function DataTable<T>({ columns, rows }: Props<T>) {
                   color: "var(--text-muted)",
                   fontWeight: 700,
                   fontSize: "0.86rem",
+                  width: column.width,
+                  minWidth: column.minWidth,
                 }}
               >
                 {column.header}

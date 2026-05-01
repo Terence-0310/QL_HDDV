@@ -1,0 +1,17 @@
+{
+  "companyName": "Công ty TNHH Giải pháp Phần mềm ABC",
+  "taxCode": "0312345678",
+  "email": "contact@abcsoftware.vn",
+  "phone": "028 7300 1234",
+  "address": "Tòa nhà ABC, 123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM",
+  "r30": true,
+  "r15": true,
+  "r7": true,
+  "r0": true,
+  "retryPolicy": "1",
+  "strongPassword": true,
+  "require2FA": false,
+  "sessionTimeout": "3",
+  "smtpHost": "smtp.sendgrid.net",
+  "smtpPort": "587"
+}

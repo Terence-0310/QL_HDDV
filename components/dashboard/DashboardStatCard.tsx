@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import Link from "next/link";
 
 type Props = {
   icon: ReactNode;
@@ -8,9 +9,10 @@ type Props = {
   change: number;
   hint: string;
   trendMode?: "positive-is-good" | "negative-is-good"; // e.g. more expired contracts is bad
+  href?: string;
 };
 
-export function DashboardStatCard({ icon, label, value, change, hint, trendMode = "positive-is-good" }: Props) {
+export function DashboardStatCard({ icon, label, value, change, hint, trendMode = "positive-is-good", href }: Props) {
   const isPositive = change > 0;
   let isGood = isPositive;
   if (trendMode === "negative-is-good") isGood = !isPositive;
@@ -18,7 +20,7 @@ export function DashboardStatCard({ icon, label, value, change, hint, trendMode 
 
   const trendColor = isGood ? "var(--success)" : "var(--danger)";
 
-  return (
+  const content = (
     <div
       style={{
         background: "var(--surface)",
@@ -30,8 +32,11 @@ export function DashboardStatCard({ icon, label, value, change, hint, trendMode 
         gap: "1rem",
         boxShadow: "var(--shadow-sm)",
         transition: "all 0.2s ease",
+        cursor: href ? "pointer" : "default",
       }}
-      className="stat-card"
+      className={`stat-card ${href ? "stat-card-clickable" : ""}`}
+      onMouseEnter={(e) => { if (href) e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={(e) => { if (href) e.currentTarget.style.transform = "translateY(0)"; }}
     >
       <div
         style={{
@@ -60,4 +65,14 @@ export function DashboardStatCard({ icon, label, value, change, hint, trendMode 
       </div>
     </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 }

@@ -13,6 +13,7 @@ import { PartnerValueDistribution } from "@/components/dashboard/PartnerValueDis
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { FileText, CheckCircle, Clock, AlertTriangle, DollarSign, Calendar, RefreshCw, Download } from "lucide-react";
 import { format, subDays, startOfYear } from "date-fns";
+import Link from "next/link";
 
 const DashboardCharts = dynamic(() => import("@/components/dashboard/DashboardCharts"), {
   ssr: false,
@@ -22,7 +23,7 @@ const DashboardCharts = dynamic(() => import("@/components/dashboard/DashboardCh
 export function AdminDashboardView() {
   const { user, loading: userLoading } = useCurrentUser();
   
-  const [filter, setFilter] = useState<"7d" | "30d" | "90d" | "year" | "custom">("30d");
+  const [filter, setFilter] = useState<"7d" | "30d" | "90d" | "365d" | "year" | "custom">("365d");
   const [customRange, setCustomRange] = useState<{from: string, to: string}>({ from: "", to: "" });
 
   const getQueryString = useCallback(() => {
@@ -32,6 +33,7 @@ export function AdminDashboardView() {
     if (filter === "7d") from = format(subDays(new Date(), 7), "yyyy-MM-dd");
     else if (filter === "30d") from = format(subDays(new Date(), 30), "yyyy-MM-dd");
     else if (filter === "90d") from = format(subDays(new Date(), 90), "yyyy-MM-dd");
+    else if (filter === "365d") from = format(subDays(new Date(), 365), "yyyy-MM-dd");
     else if (filter === "year") from = format(startOfYear(new Date()), "yyyy-MM-dd");
     else if (filter === "custom") {
       from = customRange.from;
@@ -78,6 +80,7 @@ export function AdminDashboardView() {
                 <option value="7d">7 ngày qua</option>
                 <option value="30d">30 ngày qua</option>
                 <option value="90d">90 ngày qua</option>
+                <option value="365d">1 năm qua</option>
                 <option value="year">Năm nay</option>
                 <option value="custom">Tùy chọn</option>
               </select>
@@ -102,52 +105,51 @@ export function AdminDashboardView() {
           </div>
         </section>
 
-        {isLoading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>Đang tải dữ liệu tổng quan...</div>
-        ) : (
-          <>
-            {/* STAT CARDS */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.2rem", marginBottom: "2rem" }}>
-              <DashboardStatCard icon={<FileText size={24} />} label="Tổng hợp đồng" value={summary?.totalContracts || 0} change={summary?.growthRate || 0} hint="Trong kỳ" />
-              <DashboardStatCard icon={<CheckCircle size={24} />} label="Đang hiệu lực" value={summary?.activeContracts || 0} change={2} hint="So với kỳ trước" />
-              <DashboardStatCard icon={<Clock size={24} />} label="Sắp hết hạn" value={summary?.expiringSoonContracts || 0} change={0} hint="Cần xử lý" trendMode="negative-is-good" />
-              <DashboardStatCard icon={<AlertTriangle size={24} />} label="Chờ duyệt" value={summary?.pendingContracts || 0} change={0} hint="Đang đợi duyệt" trendMode="negative-is-good" />
-              <DashboardStatCard icon={<DollarSign size={24} />} label="Tổng giá trị" value={`${((summary?.totalContractValue || 0) / 1000000000).toFixed(2)} Tỷ`} change={5} hint="Tổng giá trị" />
+        {/* STAT CARDS */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.2rem", marginBottom: "2rem", opacity: !summary ? 0.6 : 1, transition: "opacity 0.3s" }}>
+          <DashboardStatCard href="/admin/contracts" icon={<FileText size={24} />} label="Tổng hợp đồng" value={summary?.totalContracts ?? "..."} change={summary?.growthRate || 0} hint="Trong kỳ" />
+          <DashboardStatCard href="/admin/contracts?status=ACTIVE" icon={<CheckCircle size={24} />} label="Đang hiệu lực" value={summary?.activeContracts ?? "..."} change={2} hint="So với kỳ trước" />
+          <DashboardStatCard href="/admin/contracts?status=EXPIRING_SOON" icon={<Clock size={24} />} label="Sắp hết hạn" value={summary?.expiringSoonContracts ?? "..."} change={0} hint="Cần xử lý" trendMode="negative-is-good" />
+          <DashboardStatCard href="/admin/approvals" icon={<AlertTriangle size={24} />} label="Chờ duyệt" value={summary?.pendingContracts ?? "..."} change={0} hint="Đang đợi duyệt" trendMode="negative-is-good" />
+          <DashboardStatCard href="/admin/contracts" icon={<DollarSign size={24} />} label="Tổng giá trị" value={summary ? `${(summary.totalContractValue / 1000000000).toFixed(2)} Tỷ` : "..."} change={5} hint="Tổng giá trị" />
+        </div>
+
+        {/* PRIORITY BLOCK */}
+        {summary && (summary.expiredContracts > 0 || summary.expiringSoonContracts > 0 || summary.pendingContracts > 0 || summary.failedReminders > 0) && (
+          <div style={{ background: "var(--surface)", border: "1px solid var(--danger)", borderRadius: "var(--radius-md)", padding: "1.5rem", marginBottom: "2rem" }}>
+            <h3 style={{ margin: "0 0 1rem 0", color: "var(--danger)", display: "flex", alignItems: "center", gap: "0.5rem" }}><AlertTriangle size={20} /> Ưu tiên xử lý hôm nay</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+              {summary.expiredContracts > 0 && <div style={{ padding: "1rem", background: "#fef2f2", borderRadius: "8px", border: "1px solid #fca5a5", color: "#991b1b" }}><strong>{summary.expiredContracts}</strong> hợp đồng đã hết hạn. <Link href="/admin/contracts?status=EXPIRED" style={{ textDecoration: "underline", color: "#b91c1c" }}>Xem ngay</Link></div>}
+              {summary.expiringSoonContracts > 0 && <div style={{ padding: "1rem", background: "#fff7ed", borderRadius: "8px", border: "1px solid #fdba74", color: "#9a3412" }}><strong>{summary.expiringSoonContracts}</strong> hợp đồng sắp hết hạn (≤ 7 ngày). <Link href="/admin/contracts?status=EXPIRING_SOON" style={{ textDecoration: "underline", color: "#c2410c" }}>Kiểm tra</Link></div>}
+              {summary.urgentContracts > 0 && <div style={{ padding: "1rem", background: "#fef2f2", borderRadius: "8px", border: "1px solid #fca5a5", color: "#991b1b" }}><strong>{summary.urgentContracts}</strong> hợp đồng chờ duyệt quá 3 ngày! <Link href="/admin/approvals" style={{ textDecoration: "underline", color: "#b91c1c" }}>Duyệt ngay</Link></div>}
+              {summary.retryReminders > 0 && <div style={{ padding: "1rem", background: "#fff7ed", borderRadius: "8px", border: "1px solid #fdba74", color: "#9a3412" }}><strong>{summary.retryReminders}</strong> nhắc hạn bị lỗi cần retry. <Link href="/admin/reminders" style={{ textDecoration: "underline", color: "#c2410c" }}>Kiểm tra</Link></div>}
             </div>
-
-            {/* PRIORITY BLOCK */}
-            {(summary?.expiredContracts > 0 || summary?.expiringSoonContracts > 0 || summary?.pendingContracts > 0 || summary?.failedReminders > 0) && (
-              <div style={{ background: "var(--surface)", border: "1px solid var(--danger)", borderRadius: "var(--radius-md)", padding: "1.5rem", marginBottom: "2rem" }}>
-                <h3 style={{ margin: "0 0 1rem 0", color: "var(--danger)", display: "flex", alignItems: "center", gap: "0.5rem" }}><AlertTriangle size={20} /> Ưu tiên xử lý hôm nay</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-                  {summary.expiredContracts > 0 && <div style={{ padding: "1rem", background: "#fef2f2", borderRadius: "8px", border: "1px solid #fca5a5", color: "#991b1b" }}><strong>{summary.expiredContracts}</strong> hợp đồng đã hết hạn. <a href="/admin/contracts?status=EXPIRED" style={{ textDecoration: "underline", color: "#b91c1c" }}>Xem ngay</a></div>}
-                  {summary.expiringSoonContracts > 0 && <div style={{ padding: "1rem", background: "#fff7ed", borderRadius: "8px", border: "1px solid #fdba74", color: "#9a3412" }}><strong>{summary.expiringSoonContracts}</strong> hợp đồng sắp hết hạn (≤ 7 ngày). <a href="/admin/contracts?status=EXPIRING_SOON" style={{ textDecoration: "underline", color: "#c2410c" }}>Kiểm tra</a></div>}
-                  {summary.urgentContracts > 0 && <div style={{ padding: "1rem", background: "#fef2f2", borderRadius: "8px", border: "1px solid #fca5a5", color: "#991b1b" }}><strong>{summary.urgentContracts}</strong> hợp đồng chờ duyệt quá 3 ngày! <a href="/admin/approvals" style={{ textDecoration: "underline", color: "#b91c1c" }}>Duyệt ngay</a></div>}
-                  {summary.retryReminders > 0 && <div style={{ padding: "1rem", background: "#fff7ed", borderRadius: "8px", border: "1px solid #fdba74", color: "#9a3412" }}><strong>{summary.retryReminders}</strong> nhắc hạn bị lỗi cần retry. <a href="/admin/reminders" style={{ textDecoration: "underline", color: "#c2410c" }}>Kiểm tra</a></div>}
-                </div>
-              </div>
-            )}
-
-            {/* CHARTS */}
-            {charts && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.2rem", marginBottom: "2rem" }}>
-                <DashboardCharts 
-                  trend={charts.contractTrend} 
-                  distribution={charts.statusDistribution} 
-                  valueByMonth={charts.monthlyValue} 
-                  totalContracts={summary?.totalContracts || 0}
-                />
-              </div>
-            )}
-
-            {/* BOTTOM TABLES */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.2rem" }}>
-              <ExpiringContractsTable data={expiring || []} />
-              <RecentActivities data={activities || []} />
-              {charts && <PartnerValueDistribution data={charts.partnerValueDistribution} />}
-            </div>
-          </>
+          </div>
         )}
+
+        {/* CHARTS */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.2rem", marginBottom: "2rem", minHeight: "350px" }}>
+          {charts ? (
+            <DashboardCharts 
+              trend={charts.contractTrend} 
+              distribution={charts.statusDistribution} 
+              valueByMonth={charts.monthlyValue} 
+              totalContracts={summary?.totalContracts || 0}
+            />
+          ) : (
+            <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "center", alignItems: "center", background: "var(--surface)", borderRadius: "var(--radius-md)", border: "1px solid var(--border)", padding: "2rem", color: "var(--text-muted)" }}>
+              <RefreshCw size={24} style={{ animation: "spin 1s linear infinite", marginRight: "0.5rem" }} />
+              Đang tải biểu đồ dữ liệu...
+            </div>
+          )}
+        </div>
+
+        {/* BOTTOM TABLES */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.2rem" }}>
+          <ExpiringContractsTable data={expiring || []} />
+          <RecentActivities data={activities || []} />
+          {charts && <PartnerValueDistribution data={charts.partnerValueDistribution} />}
+        </div>
 
         {/* QUICK ACTIONS */}
         <QuickActions />

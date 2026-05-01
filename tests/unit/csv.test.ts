@@ -14,6 +14,6 @@ describe("csv utility", () => {
 
   it("keeps deterministic column order by header and row values", () => {
     const csv = buildCsv(["A", "B"], [[1, 2]]);
-    expect(csv).toBe("A,B\n1,2");
+    expect(csv).toBe("\uFEFFA,B\n1,2");
   });
 });

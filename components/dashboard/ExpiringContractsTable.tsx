@@ -3,7 +3,7 @@ import { FileText } from "lucide-react";
 import type { MappedDashboardData } from "@/lib/dashboard/dashboard-mapper";
 
 type Props = {
-  data: MappedDashboardData["tables"]["expiringContracts"];
+  data: any[];
 };
 
 export function ExpiringContractsTable({ data }: Props) {
@@ -21,13 +21,13 @@ export function ExpiringContractsTable({ data }: Props) {
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ margin: 0, fontSize: "0.85rem", color: "#4A90E2", fontWeight: 500 }}>{c.code}</p>
-              <p style={{ margin: "0.1rem 0", fontSize: "0.9rem", fontWeight: 600, color: "var(--text)" }}>{c.name}</p>
-              <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-muted)" }}>{c.partner}</p>
+              <p style={{ margin: "0.1rem 0", fontSize: "0.9rem", fontWeight: 600, color: "var(--text)" }}>{c.title || c.name}</p>
+              <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-muted)" }}>{c.partnerName || c.partner}</p>
             </div>
             <div style={{ textAlign: "right" }}>
-              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text)" }}>{c.expireDate}</p>
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text)" }}>{c.endDate ? new Date(c.endDate).toLocaleDateString('vi-VN') : c.expireDate}</p>
               <span style={{ display: "inline-block", marginTop: "0.2rem", padding: "0.2rem 0.6rem", background: "#FFF3E0", color: "#E69A2E", fontSize: "0.75rem", fontWeight: 600, borderRadius: "20px" }}>
-                Còn {c.remainingDays} ngày
+                Còn {c.daysLeft ?? c.remainingDays} ngày
               </span>
             </div>
           </div>

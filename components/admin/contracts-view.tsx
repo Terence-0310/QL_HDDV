@@ -12,6 +12,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { hasClientPermission } from "@/lib/permissions-client";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useSearchParams } from "next/navigation";
 
 type ContractItem = {
   id: string;
@@ -32,9 +33,12 @@ export function AdminContractsView() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 400);
-  const [status, setStatus] = useState("");
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams?.get("status") || "";
+  const [status, setStatus] = useState(initialStatus);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [thresholdPreset, setThresholdPreset] = useState<"all" | "only7" | "custom">("all");
   const [form, setForm] = useState({
     code: "",
@@ -108,6 +112,7 @@ export function AdminContractsView() {
 
   async function submitApproval(id: string) {
     try {
+      setError(null);
       await apiRequest(`/api/contracts/${id}/submit-approval`, { method: "POST" });
       await fetchData();
     } catch (e) {
@@ -115,8 +120,27 @@ export function AdminContractsView() {
     }
   }
 
+  async function handleUpdate(id: string, field: string, value: any) {
+    if (updatingId) return;
+    setUpdatingId(id);
+    try {
+      setError(null);
+      await apiRequest(`/api/admin/contracts/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ [field]: value }),
+      });
+      await fetchData();
+    } catch (err: any) {
+      console.error("Lỗi cập nhật:", err);
+      alert("Không thể cập nhật. Lỗi: " + err.message);
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
   async function startEdit(id: string) {
     try {
+      setError(null);
       const data = await apiRequest<{
         id: string;
         code: string;
@@ -293,17 +317,60 @@ export function AdminContractsView() {
         <>
           <DataTable
             columns={[
-              { key: "code", header: "Mã hợp đồng", render: (row) => row.code },
-              { key: "title", header: "Tên hợp đồng", render: (row) => row.title },
-              { key: "partner", header: "Đối tác", render: (row) => row.partnerName },
-              { key: "owner", header: "Người phụ trách", render: (row) => row.owner.name },
-              { key: "status", header: "Trạng thái", render: (row) => <StatusBadge status={row.status} /> },
-              { key: "approval", header: "Phê duyệt", render: (row) => <ApprovalStatusBadge status={row.approvalStatus} /> },
-              { key: "endDate", header: "Ngày kết thúc", render: (row) => new Date(row.endDate).toLocaleDateString() },
-              { key: "autoRenew", header: "Tự động gia hạn", render: (row) => (row.autoRenew ? "Có" : "Không") },
+              { key: "code", header: "Mã hợp đồng", width: "10%", render: (row) => <span style={{ fontWeight: 600, color: "var(--primary)" }}>{row.code}</span> },
+              { key: "title", header: "Tên hợp đồng", width: "18%", render: (row) => <div style={{ lineHeight: "1.4", fontWeight: 500, color: "var(--text)", wordBreak: "break-word" }}>{row.title.replace(/Hợp đồng Hợp đồng/g, "Hợp đồng")}</div> },
+              { key: "partner", header: "Đối tác", width: "14%", render: (row) => <span style={{ color: "var(--text-muted)", wordBreak: "break-word" }}>{row.partnerName}</span> },
+              { key: "owner", header: "Người phụ trách", width: "10%", render: (row) => <span style={{ color: "var(--text-muted)" }}>{row.owner.name}</span> },
+              { key: "status", header: "Trạng thái", width: "12%", render: (row) => (
+                <div style={{ position: "relative" }}>
+                  <select 
+                    value={row.status} 
+                    onChange={(e) => handleUpdate(row.id, "status", e.target.value)}
+                    disabled={updatingId === row.id}
+                    style={{ appearance: "none", background: "transparent", border: "1px dashed var(--border)", borderRadius: "4px", padding: "0.2rem 1.5rem 0.2rem 0.5rem", fontSize: "0.85rem", cursor: "pointer", opacity: updatingId === row.id ? 0.5 : 1, width: "100%" }}
+                  >
+                    <option value="DRAFT">Nháp</option>
+                    <option value="ACTIVE">Hiệu lực</option>
+                    <option value="EXPIRING_SOON">Sắp hết hạn</option>
+                    <option value="EXPIRED">Đã hết hạn</option>
+                    <option value="TERMINATED">Chấm dứt</option>
+                    <option value="RENEWED">Đã gia hạn</option>
+                  </select>
+                  <div style={{ position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", fontSize: "0.6rem" }}>▼</div>
+                </div>
+              )},
+              { key: "approval", header: "Phê duyệt", width: "12%", render: (row) => (
+                <div style={{ position: "relative" }}>
+                  <select 
+                    value={row.approvalStatus} 
+                    onChange={(e) => handleUpdate(row.id, "approvalStatus", e.target.value)}
+                    disabled={updatingId === row.id}
+                    style={{ appearance: "none", background: "transparent", border: "1px dashed var(--border)", borderRadius: "4px", padding: "0.2rem 1.5rem 0.2rem 0.5rem", fontSize: "0.85rem", cursor: "pointer", opacity: updatingId === row.id ? 0.5 : 1, width: "100%" }}
+                  >
+                    <option value="NOT_SUBMITTED">Chưa gửi</option>
+                    <option value="PENDING">Chờ duyệt</option>
+                    <option value="APPROVED">Đã duyệt</option>
+                    <option value="REJECTED">Từ chối</option>
+                  </select>
+                  <div style={{ position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", fontSize: "0.6rem" }}>▼</div>
+                </div>
+              )},
+              { key: "endDate", header: "Hết hạn", width: "8%", render: (row) => <span style={{ color: "var(--text-muted)" }}>{new Date(row.endDate).toLocaleDateString('vi-VN')}</span> },
+              { key: "autoRenew", header: "Tự gia hạn", width: "6%", render: (row) => (
+                <label style={{ display: "flex", alignItems: "center", cursor: updatingId === row.id ? "wait" : "pointer", opacity: updatingId === row.id ? 0.5 : 1 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={row.autoRenew} 
+                    onChange={(e) => handleUpdate(row.id, "autoRenew", e.target.checked)}
+                    disabled={updatingId === row.id}
+                    style={{ accentColor: "var(--success)", width: "16px", height: "16px", cursor: "pointer" }} 
+                  />
+                </label>
+              )},
               {
                 key: "reminderOffsets",
                 header: "Mốc nhắc",
+                width: "6%",
                 render: (row) => {
                   const offsets = (row.reminderOffsets ?? "7,15,30")
                     .split(",")
@@ -312,41 +379,26 @@ export function AdminContractsView() {
 
                   function getBadgeStyle(rawValue: string) {
                     const days = Number(rawValue);
-                    if (days === 7) {
-                      return {
-                        background: "#fef2f2",
-                        border: "1px solid #fca5a5",
-                        color: "#991b1b",
-                      };
-                    }
-                    if (days === 15) {
-                      return {
-                        background: "#fff7ed",
-                        border: "1px solid #fdba74",
-                        color: "#9a3412",
-                      };
-                    }
-                    return {
-                      background: "#fffbeb",
-                      border: "1px solid #fcd34d",
-                      color: "#92400e",
-                    };
+                    if (days === 7) return { background: "#fef2f2", border: "1px solid #fca5a5", color: "#991b1b" };
+                    if (days === 15) return { background: "#fff7ed", border: "1px solid #fdba74", color: "#9a3412" };
+                    return { background: "#fffbeb", border: "1px solid #fcd34d", color: "#92400e" };
                   }
 
                   return (
-                    <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", maxWidth: "60px" }}>
                       {offsets.map((value) => (
                         <span
                           key={`${row.id}-${value}`}
                           style={{
                             ...getBadgeStyle(value),
-                            borderRadius: "999px",
-                            padding: "0.1rem 0.5rem",
-                            fontSize: "0.78rem",
-                            fontWeight: 700,
+                            borderRadius: "4px",
+                            padding: "0.1rem 0.25rem",
+                            fontSize: "0.7rem",
+                            fontWeight: 600,
+                            lineHeight: 1
                           }}
                         >
-                          {value} ngày
+                          {value}n
                         </span>
                       ))}
                     </div>
@@ -356,16 +408,18 @@ export function AdminContractsView() {
               {
                 key: "actions",
                 header: "Thao tác",
+                width: "8%",
+                minWidth: "110px",
                 render: (row) => (
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
                     {user && hasClientPermission(user.role, "contract.submitApproval") && row.approvalStatus !== "PENDING" ? (
-                      <button className="btn-primary" onClick={() => void submitApproval(row.id)}>Gửi phê duyệt</button>
+                      <button className="btn-primary" style={{ padding: "0.3rem 0.6rem", fontSize: "0.8rem", whiteSpace: "nowrap" }} onClick={() => void submitApproval(row.id)}>Gửi duyệt</button>
                     ) : null}
                     {user && hasClientPermission(user.role, "contract.update") ? (
-                      <button onClick={() => void startEdit(row.id)}>Sửa</button>
+                      <button style={{ padding: "0.3rem 0.6rem", fontSize: "0.8rem" }} onClick={() => void startEdit(row.id)}>Sửa</button>
                     ) : null}
                     {!user || (!hasClientPermission(user.role, "contract.submitApproval") && !hasClientPermission(user.role, "contract.update"))
-                      ? "-"
+                      ? <span style={{ color: "var(--text-muted)" }}>-</span>
                       : null}
                   </div>
                 ),

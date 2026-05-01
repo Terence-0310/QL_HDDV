@@ -75,39 +75,45 @@ export function AuditLogsView() {
                 {
                   key: "createdAt",
                   header: "Thời gian",
-                  render: (row) => new Date(row.createdAt).toLocaleString(),
+                  width: "15%",
+                  render: (row) => <span style={{ color: "var(--text-muted)", fontSize: "0.9em" }}>{new Date(row.createdAt).toLocaleString('vi-VN')}</span>,
                 },
                 { 
                   key: "action", 
                   header: "Hành động", 
-                  render: (row) => <span style={{ fontWeight: 600, color: "var(--color-primary-dark)" }}>{row.action}</span> 
+                  width: "15%",
+                  render: (row) => <span style={{ fontWeight: 600, color: "var(--primary)" }}>{row.action}</span> 
                 },
                 { 
                   key: "entityType", 
                   header: "Đối tượng", 
-                  render: (row) => row.entityType 
+                  width: "10%",
+                  render: (row) => <span style={{ color: "var(--text)" }}>{row.entityType}</span> 
                 },
                 { 
                   key: "entityId", 
                   header: "ID", 
-                  render: (row) => <span style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{row.entityId}</span> 
+                  width: "10%",
+                  render: (row) => <span style={{ fontFamily: "monospace", fontSize: "0.85em", color: "var(--text-muted)" }}>{row.entityId}</span> 
                 },
                 { 
                   key: "user", 
                   header: "Người thực hiện", 
-                  render: (row) => row.user ? `${row.user.name} (${row.user.email})` : "Hệ thống (Tự động)" 
+                  width: "20%",
+                  render: (row) => row.user ? <span style={{ fontWeight: 500 }}>{row.user.name} <span style={{ color: "var(--text-muted)", fontWeight: "normal" }}>({row.user.email})</span></span> : <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Hệ thống (Tự động)</span>
                 },
                 {
                   key: "metadata",
                   header: "Dữ liệu (JSON)",
+                  width: "30%",
                   render: (row) => row.metadata ? (
                     <details>
-                      <summary style={{ cursor: "pointer", fontSize: "0.9em", color: "var(--color-text-light)" }}>Xem chi tiết</summary>
-                      <pre style={{ fontSize: "0.8em", maxWidth: "250px", overflowX: "auto", background: "var(--color-bg-alt)", padding: "0.5rem", borderRadius: "4px" }}>
+                      <summary style={{ cursor: "pointer", fontSize: "0.85em", color: "var(--primary)", fontWeight: 500 }}>Xem chi tiết</summary>
+                      <pre style={{ fontSize: "0.8em", maxWidth: "250px", overflowX: "auto", background: "rgba(0,0,0,0.03)", padding: "0.5rem", borderRadius: "4px", border: "1px solid var(--border)", marginTop: "0.5rem", color: "var(--text-muted)" }}>
                         {row.metadata}
                       </pre>
                     </details>
-                  ) : "-",
+                  ) : <span style={{ color: "var(--text-muted)" }}>-</span>,
                 }
               ]}
               rows={items}

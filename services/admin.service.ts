@@ -1,9 +1,10 @@
 import { ApprovalStatus, Prisma, UserStatus } from "@prisma/client";
 import { AppError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { getCacheValue, setCacheValue } from "@/lib/simple-cache";
+import { getCacheValue, setCacheValue, invalidateCacheByPrefix } from "@/lib/simple-cache";
 import { toCacheKey } from "@/lib/cache-key";
 import { createAuditLog } from "@/services/audit.service";
+import { hashPassword } from "@/lib/password";
 import type { AuthUser } from "@/types/auth";
 import type { AdminUserListQuery } from "@/types/admin";
 
@@ -17,7 +18,7 @@ export async function listUsers(query: AdminUserListQuery) {
       id: string;
       name: string;
       email: string;
-      role: "ADMIN" | "STAFF" | "USER";
+      role: "SUPER_ADMIN" | "ADMIN" | "STAFF" | "USER";
       status: "ACTIVE" | "INACTIVE" | "BLOCKED";
       createdAt: Date;
       updatedAt: Date;
@@ -98,7 +99,7 @@ export async function getUserById(userId: string) {
 
 export async function updateUser(
   userId: string,
-  input: { role?: "ADMIN" | "STAFF" | "USER"; status?: "ACTIVE" | "INACTIVE" | "BLOCKED" },
+  input: { role?: "SUPER_ADMIN" | "ADMIN" | "STAFF" | "USER"; status?: "ACTIVE" | "INACTIVE" | "BLOCKED" },
   authUser: AuthUser,
 ) {
   const existing = await prisma.user.findUnique({
@@ -109,6 +110,14 @@ export async function updateUser(
 
   if (existing.id === authUser.id && input.status && input.status !== UserStatus.ACTIVE) {
     throw new AppError("You cannot deactivate or block your own account", 409, "CONFLICT");
+  }
+
+  if (input.role === "SUPER_ADMIN" && authUser.role !== "SUPER_ADMIN") {
+    throw new AppError("Only Super Admins can assign the SUPER_ADMIN role", 403, "FORBIDDEN");
+  }
+
+  if (input.role && existing.role === "SUPER_ADMIN" && authUser.role !== "SUPER_ADMIN") {
+    throw new AppError("You cannot change the role of a Super Admin", 403, "FORBIDDEN");
   }
 
   const updated = await prisma.user.update({
@@ -147,7 +156,92 @@ export async function updateUser(
     });
   }
 
+  invalidateCacheByPrefix("admin:users:list");
   return updated;
+}
+
+export async function deleteUser(userId: string, authUser: AuthUser) {
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true },
+  });
+  if (!existing) throw new AppError("User not found", 404, "NOT_FOUND");
+
+  if (existing.id === authUser.id) {
+    throw new AppError("You cannot delete your own account", 409, "CONFLICT");
+  }
+
+  if (existing.role === "SUPER_ADMIN") {
+    throw new AppError("Cannot delete a Super Admin account", 403, "FORBIDDEN");
+  }
+
+  if (existing.role === "ADMIN" && authUser.role !== "SUPER_ADMIN") {
+    throw new AppError("Only Super Admins can delete other Admins", 403, "FORBIDDEN");
+  }
+
+  await prisma.user.delete({
+    where: { id: userId },
+  });
+
+  await createAuditLog({
+    userId: authUser.id,
+    action: "DELETE_USER",
+    entityType: "USER",
+    entityId: userId,
+    metadata: { role: existing.role },
+  });
+
+  invalidateCacheByPrefix("admin:users:list");
+  return { success: true };
+}
+
+export async function createUser(
+  input: { name: string; email: string; password: string; role: "SUPER_ADMIN" | "ADMIN" | "STAFF" | "USER"; status: "ACTIVE" | "INACTIVE" | "BLOCKED" },
+  authUser: AuthUser,
+) {
+  if (input.role === "SUPER_ADMIN" && authUser.role !== "SUPER_ADMIN") {
+    throw new AppError("Only Super Admins can create a SUPER_ADMIN", 403, "FORBIDDEN");
+  }
+
+  const existing = await prisma.user.findUnique({
+    where: { email: input.email },
+    select: { id: true },
+  });
+
+  if (existing) {
+    throw new AppError("Email đã tồn tại", 409, "EMAIL_ALREADY_EXISTS");
+  }
+
+  const passwordHash = await hashPassword(input.password);
+  
+  const created = await prisma.user.create({
+    data: {
+      name: input.name,
+      email: input.email,
+      passwordHash,
+      role: input.role,
+      status: input.status,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      createdAt: true,
+    },
+  });
+
+  await createAuditLog({
+    userId: authUser.id,
+    action: "CREATE_USER",
+    entityType: "USER",
+    entityId: created.id,
+    metadata: { role: created.role, email: created.email },
+  });
+
+  invalidateCacheByPrefix("admin:users:list");
+  return created;
 }
 
 export async function listAdminContracts(query: {

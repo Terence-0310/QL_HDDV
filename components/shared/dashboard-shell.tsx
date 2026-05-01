@@ -37,24 +37,22 @@ const navGroups: NavGroup[] = [
     ]
   },
   {
-    title: "NGƯỜI DÙNG & PHÂN QUYỀN",
+    title: "QUẢN TRỊ NGƯỜI DÙNG",
     items: [
-      { href: "/admin/users", label: "Người dùng", icon: <Users size={18} />, permission: "user.view", prefetchApi: "/api/admin/users?page=1&pageSize=10", prefetchMethod: "apiRequestEnvelope" },
-      { href: "/admin/roles", label: "Vai trò & phân quyền", icon: <Shield size={18} />, permission: "admin.dashboard.view" },
+      { href: "/admin/users", label: "Người dùng & Phân quyền", icon: <Users size={18} />, permission: "user.view", prefetchApi: "/api/admin/users?page=1&pageSize=10", prefetchMethod: "apiRequestEnvelope" },
     ]
   },
   {
-    title: "NHẮC HẠN",
+    title: "QUẢN TRỊ NHẮC HẠN",
     items: [
-      { href: "/admin/reminders", label: "Nhắc hạn", icon: <Clock size={18} />, permission: "admin.dashboard.view" },
-      { href: "/admin/reminders/history", label: "Lịch sử nhắc hạn", icon: <History size={18} />, permission: "admin.dashboard.view" },
+      { href: "/admin/reminders", label: "Tiến độ nhắc hạn", icon: <Clock size={18} />, permission: "admin.dashboard.view" },
     ]
   },
   {
     title: "BÁO CÁO & THỐNG KÊ",
     items: [
-      { href: "/admin/reports", label: "Báo cáo", icon: <BarChart2 size={18} />, permission: "report.view", prefetchApi: "/api/admin/reports/summary", prefetchMethod: "apiRequest" },
-      { href: "/admin/stats", label: "Thống kê", icon: <PieChart size={18} />, permission: "report.view" },
+      { href: "/admin/reports", label: "Báo cáo Tổng quan", icon: <BarChart2 size={18} />, permission: "report.view", prefetchApi: "/api/admin/reports/summary", prefetchMethod: "apiRequest" },
+      { href: "/admin/reports/contracts", label: "Thống kê Hợp đồng", icon: <PieChart size={18} />, permission: "report.view" },
     ]
   },
   {
@@ -163,6 +161,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     }
   }, [router, user]);
 
+  const activeItem = navGroups.flatMap(g => g.items).find(item => {
+    if (item.href === "/admin/dashboard" || item.href === "/admin/reports") return pathname === item.href;
+    return pathname === item.href || pathname.startsWith(item.href + "/");
+  });
+  const pageTitle = activeItem ? activeItem.label : "Tổng quan";
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg)" }}>
       {/* SIDEBAR */}
@@ -184,7 +188,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 {group.title && <h4 style={{ margin: "0 0 0.75rem 0.5rem", fontSize: "0.75rem", fontWeight: 600, color: "rgba(239,226,210,0.5)", letterSpacing: "0.05em" }}>{group.title}</h4>}
                 <nav style={{ display: "grid", gap: "0.2rem" }}>
                   {visibleItems.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && pathname.startsWith(item.href));
+                    const isExactMatch = pathname === item.href;
+                    const isSubRoute = item.href !== "/admin/dashboard" && item.href !== "/admin/reports" && pathname.startsWith(item.href + "/");
+                    const isActive = isExactMatch || isSubRoute;
+                    
                     return (
                       <Link
                         key={item.href}
@@ -253,7 +260,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: "var(--text)" }}>Tổng quan</h2>
+            <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: "var(--text)" }}>{pageTitle}</h2>
           </div>
 
           <div style={{ flex: 1, maxWidth: "480px", margin: "0 2rem" }}>

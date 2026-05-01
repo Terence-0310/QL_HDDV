@@ -1,6 +1,6 @@
 import { Prisma, UserRole, type Contract } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCacheValue, setCacheValue } from "@/lib/simple-cache";
+import { getCacheValue, setCacheValue, invalidateCacheByPrefix } from "@/lib/simple-cache";
 import { toCacheKey } from "@/lib/cache-key";
 import { AppError } from "@/lib/errors";
 import { createAuditLog } from "@/services/audit.service";
@@ -21,7 +21,7 @@ function mapContractResponse(contract: Contract): Contract {
 }
 
 function assertContractAccess(contractOwnerId: string, authUser: AuthUser) {
-  if (authUser.role === UserRole.ADMIN) return;
+  if (authUser.role === UserRole.ADMIN || authUser.role === UserRole.SUPER_ADMIN) return;
   if (contractOwnerId !== authUser.id) {
     throw new AppError("You do not have access to this contract", 403, "FORBIDDEN");
   }
@@ -55,7 +55,7 @@ function buildContractListWhereClause(input: ListContractsInput, authUser: AuthU
     ...dateFilters,
     status: input.status,
     autoRenew: input.autoRenew,
-    ownerId: authUser.role === UserRole.ADMIN ? input.ownerId : authUser.id,
+    ownerId: (authUser.role === UserRole.ADMIN || authUser.role === UserRole.SUPER_ADMIN) ? input.ownerId : authUser.id,
     OR: input.search
       ? [
           { title: { contains: input.search } },
@@ -85,7 +85,7 @@ function handleContractServiceError(error: unknown): never {
 
 export async function createContract(input: CreateContractInput, authUser: AuthUser): Promise<Contract> {
   try {
-    const ownerId = authUser.role === UserRole.ADMIN && input.ownerId ? input.ownerId : authUser.id;
+    const ownerId = (authUser.role === UserRole.ADMIN || authUser.role === UserRole.SUPER_ADMIN) && input.ownerId ? input.ownerId : authUser.id;
     const { reminderThresholdDays, ...restInput } = input;
     const reminderOffsets = normalizeReminderThresholdDays(input.reminderThresholdDays);
     const created = await prisma.contract.create({
@@ -106,6 +106,9 @@ export async function createContract(input: CreateContractInput, authUser: AuthU
       entityId: created.id,
       metadata: { code: created.code, ownerId: created.ownerId },
     });
+
+    invalidateCacheByPrefix("contracts:list");
+    invalidateCacheByPrefix("admin:contracts:list");
 
     return mapContractResponse(created);
   } catch (error) {
@@ -136,6 +139,9 @@ export async function updateContract(contractId: string, input: UpdateContractIn
       metadata: { code: updated.code },
     });
 
+    invalidateCacheByPrefix("contracts:list");
+    invalidateCacheByPrefix("admin:contracts:list");
+
     return mapContractResponse(updated);
   } catch (error) {
     handleContractServiceError(error);
@@ -154,6 +160,9 @@ export async function deleteContract(contractId: string, authUser: AuthUser): Pr
       entityId: deleted.id,
       metadata: { code: deleted.code },
     });
+
+    invalidateCacheByPrefix("contracts:list");
+    invalidateCacheByPrefix("admin:contracts:list");
   } catch (error) {
     handleContractServiceError(error);
   }

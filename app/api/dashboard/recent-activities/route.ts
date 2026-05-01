@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "8", 10);
 
     const data = await getDashboardRecentActivities(authUser, limit);
-    return successResponse("Recent activities fetched successfully", data);
+    const response = successResponse("Recent activities fetched successfully", data);
+    response.headers.set("Cache-Control", "public, s-maxage=10, stale-while-revalidate=30");
+    return response;
   } catch (error) {
     return handleRouteError(error);
   }

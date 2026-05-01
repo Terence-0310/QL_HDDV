@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { handleRouteError, successResponse } from "@/lib/api-response";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, AUTH_COOKIE_NAME } from "@/lib/auth";
 import { createCsrfToken, CSRF_COOKIE_NAME } from "@/lib/csrf";
 
 export async function GET(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const response = handleRouteError(error);
     if (response.status === 401) {
-      response.cookies.delete("auth_token");
+      response.cookies.delete(AUTH_COOKIE_NAME);
     }
     return response;
   }

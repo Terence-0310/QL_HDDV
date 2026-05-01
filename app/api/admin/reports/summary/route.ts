@@ -7,7 +7,9 @@ export async function GET(request: NextRequest) {
   try {
     const authUser = await requirePermission(request, "report.view");
     const data = await getAdminSummaryReport(authUser);
-    return successResponse("Admin report summary fetched successfully", data);
+    const response = successResponse("Admin report summary fetched successfully", data);
+    response.headers.set("Cache-Control", "public, s-maxage=30, stale-while-revalidate=60");
+    return response;
   } catch (error) {
     return handleRouteError(error);
   }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { SWRProvider } from "@/components/providers/swr-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +15,11 @@ type RootLayoutProps = Readonly<{
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="vi">
-      <body>{children}</body>
+      <body>
+        <SWRProvider>
+          {children}
+        </SWRProvider>
+      </body>
     </html>
   );
 }

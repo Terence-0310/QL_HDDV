@@ -7,7 +7,7 @@ import { buildCsv } from "@/lib/csv";
 
 // Helper for filtering by Role
 function getRoleWhere(authUser: AuthUser): Prisma.ContractWhereInput {
-  if (authUser.role === "ADMIN") return {};
+  if (authUser.role === "ADMIN" || authUser.role === "SUPER_ADMIN") return {};
   return { ownerId: authUser.id };
 }
 
@@ -19,9 +19,9 @@ export async function getDashboardSummary(authUser: AuthUser, from?: Date, to?: 
   if (from && to) {
     dateWhere.createdAt = { gte: startOfUtcDay(from), lte: endOfUtcDay(to) };
   } else {
-    // Default last 30 days
+    // Mặc định lấy dữ liệu 1 năm (365 ngày) để hiển thị Tổng quan đồ sộ hơn
     const now = new Date();
-    dateWhere.createdAt = { gte: addDaysUtc(startOfUtcDay(now), -30), lte: endOfUtcDay(now) };
+    dateWhere.createdAt = { gte: addDaysUtc(startOfUtcDay(now), -365), lte: endOfUtcDay(now) };
   }
 
   const baseWhere = { ...roleWhere, ...dateWhere };
@@ -47,10 +47,10 @@ export async function getDashboardSummary(authUser: AuthUser, from?: Date, to?: 
     prisma.contract.count({ where: baseWhere }),
     prisma.contract.count({ where: { ...baseWhere, status: ContractStatus.ACTIVE } }),
     prisma.contract.count({ where: { ...baseWhere, approvalStatus: ApprovalStatus.PENDING } }),
-    prisma.contract.count({ where: { ...roleWhere, endDate: { gte: todayStart, lte: expiringSoonBoundary }, status: ContractStatus.ACTIVE } }),
-    prisma.contract.count({ where: { ...roleWhere, endDate: { lt: todayStart }, status: ContractStatus.ACTIVE } }),
-    authUser.role === "ADMIN" ? prisma.user.count() : Promise.resolve(0),
-    authUser.role === "ADMIN" ? prisma.user.count({ where: { status: UserStatus.ACTIVE } }) : Promise.resolve(0),
+    prisma.contract.count({ where: { ...roleWhere, status: ContractStatus.EXPIRING_SOON } }),
+    prisma.contract.count({ where: { ...roleWhere, endDate: { lt: todayStart }, status: { in: [ContractStatus.ACTIVE, ContractStatus.EXPIRING_SOON, ContractStatus.EXPIRED] } } }),
+    (authUser.role === "ADMIN" || authUser.role === "SUPER_ADMIN") ? prisma.user.count() : Promise.resolve(0),
+    (authUser.role === "ADMIN" || authUser.role === "SUPER_ADMIN") ? prisma.user.count({ where: { status: UserStatus.ACTIVE } }) : Promise.resolve(0),
     prisma.reminderJob.count({ where: { status: ReminderJobStatus.PENDING } }),
     prisma.reminderJob.count({ where: { status: ReminderJobStatus.FAILED } }),
     prisma.reminderJob.count({ where: { status: ReminderJobStatus.DEAD_LETTER } }),
@@ -84,7 +84,7 @@ export async function getDashboardCharts(authUser: AuthUser, from?: Date, to?: D
     dateWhere.createdAt = { gte: startOfUtcDay(from), lte: endOfUtcDay(to) };
   } else {
     const now = new Date();
-    dateWhere.createdAt = { gte: addDaysUtc(startOfUtcDay(now), -90), lte: endOfUtcDay(now) };
+    dateWhere.createdAt = { gte: addDaysUtc(startOfUtcDay(now), -365), lte: endOfUtcDay(now) };
   }
 
   const baseWhere = { ...roleWhere, ...dateWhere };
@@ -95,7 +95,7 @@ export async function getDashboardCharts(authUser: AuthUser, from?: Date, to?: D
   });
 
   // Aggregate monthly values
-  const monthlyMap = new Map<string, { newContracts: number, expiredContracts: number, renewedContracts: number, value: number }>();
+  const monthlyMap = new Map<string, { new: number, expired: number, renewed: number, value: number }>();
   const partnerMap = new Map<string, number>();
   const statusMap = new Map<string, number>();
   let totalValue = 0;
@@ -103,13 +103,13 @@ export async function getDashboardCharts(authUser: AuthUser, from?: Date, to?: D
   contracts.forEach(c => {
     const month = `${c.createdAt.getFullYear()}-${String(c.createdAt.getMonth() + 1).padStart(2, "0")}`;
     if (!monthlyMap.has(month)) {
-      monthlyMap.set(month, { newContracts: 0, expiredContracts: 0, renewedContracts: 0, value: 0 });
+      monthlyMap.set(month, { new: 0, expired: 0, renewed: 0, value: 0 });
     }
     const m = monthlyMap.get(month)!;
-    m.newContracts += 1;
+    m.new += 1;
     m.value += c.value;
-    if (c.status === ContractStatus.EXPIRED) m.expiredContracts += 1;
-    if (c.status === ContractStatus.RENEWED) m.renewedContracts += 1;
+    if (c.status === ContractStatus.EXPIRED) m.expired += 1;
+    if (c.status === ContractStatus.RENEWED) m.renewed += 1;
     
     partnerMap.set(c.partnerName, (partnerMap.get(c.partnerName) || 0) + c.value);
     statusMap.set(c.status, (statusMap.get(c.status) || 0) + 1);
@@ -128,18 +128,29 @@ export async function getDashboardCharts(authUser: AuthUser, from?: Date, to?: D
     [ContractStatus.TERMINATED]: "Chấm dứt",
     [ContractStatus.RENEWED]: "Đã gia hạn",
   };
+  
+  const statusColors: Record<string, string> = {
+    [ContractStatus.DRAFT]: "#9CA3AF",
+    [ContractStatus.ACTIVE]: "#10B981",
+    [ContractStatus.EXPIRING_SOON]: "#F59E0B",
+    [ContractStatus.EXPIRED]: "#EF4444",
+    [ContractStatus.TERMINATED]: "#4B5563",
+    [ContractStatus.RENEWED]: "#3B82F6",
+  };
+
   const statusDistribution = Array.from(statusMap.entries()).map(([status, value]) => ({
     status,
     label: statusLabels[status] || status,
     value,
-    percentage: (value / totalStatus) * 100
+    percentage: (value / totalStatus) * 100,
+    color: statusColors[status] || "#CBD5E1"
   }));
 
   const partnerValueDistribution = Array.from(partnerMap.entries())
     .map(([partnerName, value]) => ({
       partnerName,
       value,
-      percentage: totalValue > 0 ? (value / totalValue) * 100 : 0
+      percentage: totalValue > 0 ? Number(((value / totalValue) * 100).toFixed(1)) : 0
     }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 5); // Top 5
@@ -162,7 +173,7 @@ export async function getDashboardExpiringContracts(authUser: AuthUser, days: nu
   const contracts = await prisma.contract.findMany({
     where: {
       ...roleWhere,
-      status: ContractStatus.ACTIVE,
+      status: { in: [ContractStatus.ACTIVE, ContractStatus.EXPIRING_SOON] },
       endDate: { gte: todayStart, lte: expiringBoundary }
     },
     select: {
@@ -181,7 +192,7 @@ export async function getDashboardExpiringContracts(authUser: AuthUser, days: nu
 
 // Phase 4: Recent Activities
 export async function getDashboardRecentActivities(authUser: AuthUser, limit: number = 8) {
-  const roleWhere = authUser.role === "ADMIN" ? {} : { userId: authUser.id };
+  const roleWhere = (authUser.role === "ADMIN" || authUser.role === "SUPER_ADMIN") ? {} : { userId: authUser.id };
   
   const activities = await prisma.auditLog.findMany({
     where: roleWhere,

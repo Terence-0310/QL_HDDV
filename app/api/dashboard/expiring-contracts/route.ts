@@ -11,7 +11,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "5", 10);
 
     const data = await getDashboardExpiringContracts(authUser, days, limit);
-    return successResponse("Expiring contracts fetched successfully", data);
+    const response = successResponse("Expiring contracts fetched successfully", data);
+    response.headers.set("Cache-Control", "public, s-maxage=30, stale-while-revalidate=60");
+    return response;
   } catch (error) {
     return handleRouteError(error);
   }

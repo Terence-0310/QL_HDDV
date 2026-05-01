@@ -1,0 +1,108 @@
+Cột 1,Cột 2,Cột 3,Cột 4,Cột 5,Cột 6,Cột 7
+Tổng hợp đồng,530
+Hợp đồng đang hiệu lực,160
+Hợp đồng chờ duyệt,62
+Hợp đồng sắp hết hạn,83
+Hợp đồng đã hết hạn,101
+Tổng giá trị hợp đồng (VND),899000000000
+
+--- PHÂN BỔ TRẠNG THÁI ---,
+Nháp,178
+Đã gia hạn,50
+Chấm dứt,50
+Đã hết hạn,50
+Đang hiệu lực,160
+Sắp hết hạn,42
+
+--- PHÂN BỔ ĐỐI TÁC ---,
+Tập đoàn Á Châu 51,10000000000
+Doanh nghiệp tư nhân Đại Dương 151,10000000000
+Tổng công ty Thái Bình Dương 251,10000000000
+Công ty Cổ phần XYZ 351,10000000000
+Chi nhánh Toàn Cầu 451,10000000000
+
+--- HỢP ĐỒNG SẮP HẾT HẠN ---,
+Mã hợp đồng,Tên hợp đồng,Đối tác,Ngày hết hạn,Trạng thái,Giá trị,Số ngày còn lại
+HD-2026-0195,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH ABC 196,Công ty TNHH ABC 196,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0495,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thương Mại Việt 496,Tổng công ty Thương Mại Việt 496,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0795,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Thành Đạt 796,Hợp tác xã Thành Đạt 796,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0285,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thương Mại Việt 286,Tổng công ty Thương Mại Việt 286,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0585,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Thành Đạt 586,Hợp tác xã Thành Đạt 586,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0885,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Bình Minh 886,Doanh nghiệp tư nhân Bình Minh 886,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0075,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thương Mại Việt 76,Tổng công ty Thương Mại Việt 76,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0375,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Thành Đạt 376,Hợp tác xã Thành Đạt 376,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0675,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Bình Minh 676,Doanh nghiệp tư nhân Bình Minh 676,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0975,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Viễn Đông 976,Chi nhánh Viễn Đông 976,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0165,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Thành Đạt 166,Hợp tác xã Thành Đạt 166,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0465,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Bình Minh 466,Doanh nghiệp tư nhân Bình Minh 466,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0765,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Viễn Đông 766,Chi nhánh Viễn Đông 766,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0255,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Bình Minh 256,Doanh nghiệp tư nhân Bình Minh 256,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0555,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Viễn Đông 556,Chi nhánh Viễn Đông 556,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0855,Hợp đồng Hợp đồng Mua bán - Tập đoàn Phát Đạt 856,Tập đoàn Phát Đạt 856,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0045,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Bình Minh 46,Doanh nghiệp tư nhân Bình Minh 46,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0345,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Viễn Đông 346,Chi nhánh Viễn Đông 346,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0645,Hợp đồng Hợp đồng Mua bán - Tập đoàn Phát Đạt 646,Tập đoàn Phát Đạt 646,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0945,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần Hưng Thịnh 946,Công ty Cổ phần Hưng Thịnh 946,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0135,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Viễn Đông 136,Chi nhánh Viễn Đông 136,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0435,Hợp đồng Hợp đồng Mua bán - Tập đoàn Phát Đạt 436,Tập đoàn Phát Đạt 436,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0735,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần Hưng Thịnh 736,Công ty Cổ phần Hưng Thịnh 736,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0225,Hợp đồng Hợp đồng Mua bán - Tập đoàn Phát Đạt 226,Tập đoàn Phát Đạt 226,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0525,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần Hưng Thịnh 526,Công ty Cổ phần Hưng Thịnh 526,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0825,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH ABC 826,Công ty TNHH ABC 826,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0015,Hợp đồng Hợp đồng Mua bán - Tập đoàn Phát Đạt 16,Tập đoàn Phát Đạt 16,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0315,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần Hưng Thịnh 316,Công ty Cổ phần Hưng Thịnh 316,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0615,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH ABC 616,Công ty TNHH ABC 616,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0915,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thương Mại Việt 916,Tổng công ty Thương Mại Việt 916,2026-05-06,EXPIRING_SOON,1250000000,5
+HD-2026-0105,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần Hưng Thịnh 106,Công ty Cổ phần Hưng Thịnh 106,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0405,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH ABC 406,Công ty TNHH ABC 406,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0705,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thương Mại Việt 706,Tổng công ty Thương Mại Việt 706,2026-05-06,EXPIRING_SOON,750000000,5
+HD-2026-0096,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thái Bình Dương 97,Tổng công ty Thái Bình Dương 97,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0296,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Toàn Cầu 297,Chi nhánh Toàn Cầu 297,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0496,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH Kiến Tạo 497,Công ty TNHH Kiến Tạo 497,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0696,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Đại Dương 697,Doanh nghiệp tư nhân Đại Dương 697,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0896,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần XYZ 897,Công ty Cổ phần XYZ 897,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0184,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Toàn Cầu 185,Chi nhánh Toàn Cầu 185,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0384,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH Kiến Tạo 385,Công ty TNHH Kiến Tạo 385,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0584,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Đại Dương 585,Doanh nghiệp tư nhân Đại Dương 585,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0784,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần XYZ 785,Công ty Cổ phần XYZ 785,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0984,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Công Nghệ Mới 985,Hợp tác xã Công Nghệ Mới 985,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0176,Hợp đồng Hợp đồng Mua bán - Tập đoàn Á Châu 177,Tập đoàn Á Châu 177,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0376,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thái Bình Dương 377,Tổng công ty Thái Bình Dương 377,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0576,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Toàn Cầu 577,Chi nhánh Toàn Cầu 577,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0776,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH Kiến Tạo 777,Công ty TNHH Kiến Tạo 777,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0976,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Đại Dương 977,Doanh nghiệp tư nhân Đại Dương 977,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0064,Hợp đồng Hợp đồng Mua bán - Tập đoàn Á Châu 65,Tập đoàn Á Châu 65,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0264,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thái Bình Dương 265,Tổng công ty Thái Bình Dương 265,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0464,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Toàn Cầu 465,Chi nhánh Toàn Cầu 465,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0664,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH Kiến Tạo 665,Công ty TNHH Kiến Tạo 665,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0864,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Đại Dương 865,Doanh nghiệp tư nhân Đại Dương 865,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0056,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần XYZ 57,Công ty Cổ phần XYZ 57,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0256,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Công Nghệ Mới 257,Hợp tác xã Công Nghệ Mới 257,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0456,Hợp đồng Hợp đồng Mua bán - Tập đoàn Á Châu 457,Tập đoàn Á Châu 457,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0656,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thái Bình Dương 657,Tổng công ty Thái Bình Dương 657,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0856,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Toàn Cầu 857,Chi nhánh Toàn Cầu 857,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0144,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Công Nghệ Mới 145,Hợp tác xã Công Nghệ Mới 145,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0344,Hợp đồng Hợp đồng Mua bán - Tập đoàn Á Châu 345,Tập đoàn Á Châu 345,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0544,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thái Bình Dương 545,Tổng công ty Thái Bình Dương 545,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0744,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Toàn Cầu 745,Chi nhánh Toàn Cầu 745,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0944,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH Kiến Tạo 945,Công ty TNHH Kiến Tạo 945,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0136,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Đại Dương 137,Doanh nghiệp tư nhân Đại Dương 137,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0336,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần XYZ 337,Công ty Cổ phần XYZ 337,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0536,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Công Nghệ Mới 537,Hợp tác xã Công Nghệ Mới 537,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0736,Hợp đồng Hợp đồng Mua bán - Tập đoàn Á Châu 737,Tập đoàn Á Châu 737,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0936,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thái Bình Dương 937,Tổng công ty Thái Bình Dương 937,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0024,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Đại Dương 25,Doanh nghiệp tư nhân Đại Dương 25,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0224,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần XYZ 225,Công ty Cổ phần XYZ 225,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0424,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Công Nghệ Mới 425,Hợp tác xã Công Nghệ Mới 425,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0624,Hợp đồng Hợp đồng Mua bán - Tập đoàn Á Châu 625,Tập đoàn Á Châu 625,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0824,Hợp đồng Hợp đồng Cấp phép - Tổng công ty Thái Bình Dương 825,Tổng công ty Thái Bình Dương 825,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0016,Hợp đồng Hợp đồng Hợp tác Kinh doanh - Chi nhánh Toàn Cầu 17,Chi nhánh Toàn Cầu 17,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0216,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH Kiến Tạo 217,Công ty TNHH Kiến Tạo 217,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0416,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Đại Dương 417,Doanh nghiệp tư nhân Đại Dương 417,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0616,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần XYZ 617,Công ty Cổ phần XYZ 617,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0816,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Công Nghệ Mới 817,Hợp tác xã Công Nghệ Mới 817,2026-05-13,EXPIRING_SOON,1300000000,12
+HD-2026-0104,Hợp đồng Hợp đồng Tư vấn - Công ty TNHH Kiến Tạo 105,Công ty TNHH Kiến Tạo 105,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0304,Hợp đồng Hợp đồng Thuê tài sản - Doanh nghiệp tư nhân Đại Dương 305,Doanh nghiệp tư nhân Đại Dương 305,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0504,Hợp đồng Hợp đồng Cung cấp Dịch vụ - Công ty Cổ phần XYZ 505,Công ty Cổ phần XYZ 505,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0704,Hợp đồng Hợp đồng Bảo trì - Hợp tác xã Công Nghệ Mới 705,Hợp tác xã Công Nghệ Mới 705,2026-05-13,EXPIRING_SOON,700000000,12
+HD-2026-0904,Hợp đồng Hợp đồng Mua bán - Tập đoàn Á Châu 905,Tập đoàn Á Châu 905,2026-05-13,EXPIRING_SOON,700000000,12

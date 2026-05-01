@@ -118,7 +118,7 @@ export async function processPendingReminderJobs(options?: {
 
       try {
         const admins = await prisma.user.findMany({
-          where: { role: "ADMIN", status: "ACTIVE" },
+          where: { role: { in: ["ADMIN", "SUPER_ADMIN"] }, status: "ACTIVE" },
           select: { id: true },
         });
         await Promise.all(

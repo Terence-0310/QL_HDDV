@@ -10,6 +10,7 @@ const baseStyle: CSSProperties = {
   fontSize: "0.75rem",
   fontWeight: 700,
   border: "1px solid transparent",
+  whiteSpace: "nowrap",
 };
 
 function badgeTone(value: string): { fg: string; bg: string; border: string } {

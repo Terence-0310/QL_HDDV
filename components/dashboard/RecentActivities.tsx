@@ -3,30 +3,28 @@ import { User, CheckCircle, XCircle, Bell, Edit } from "lucide-react";
 import type { MappedDashboardData } from "@/lib/dashboard/dashboard-mapper";
 
 type Props = {
-  data: MappedDashboardData["tables"]["recentActivities"];
+  data: any[];
 };
 
 export function RecentActivities({ data }: Props) {
   const getIcon = (type: string) => {
-    switch (type) {
-      case "create": return <User size={16} color="#4A90E2" />;
-      case "approve": return <CheckCircle size={16} color="var(--success)" />;
-      case "reject": return <XCircle size={16} color="var(--danger)" />;
-      case "remind": return <Bell size={16} color="var(--warning)" />;
-      case "update": return <Edit size={16} color="#8E44AD" />;
-      default: return <User size={16} />;
-    }
+    if (!type) return <User size={16} />;
+    if (type.includes("CREATE")) return <User size={16} color="#4A90E2" />;
+    if (type.includes("APPROVE") || type.includes("SUCCESS")) return <CheckCircle size={16} color="var(--success)" />;
+    if (type.includes("REJECT") || type.includes("FAIL")) return <XCircle size={16} color="var(--danger)" />;
+    if (type.includes("REMIND")) return <Bell size={16} color="var(--warning)" />;
+    if (type.includes("UPDATE") || type.includes("SUBMIT")) return <Edit size={16} color="#8E44AD" />;
+    return <User size={16} />;
   };
 
   const getBg = (type: string) => {
-    switch (type) {
-      case "create": return "#E6F0FA";
-      case "approve": return "#E8F6EF";
-      case "reject": return "#FAECEC";
-      case "remind": return "#FDF5E6";
-      case "update": return "#F4ECF7";
-      default: return "#eee";
-    }
+    if (!type) return "#eee";
+    if (type.includes("CREATE")) return "#E6F0FA";
+    if (type.includes("APPROVE") || type.includes("SUCCESS")) return "#E8F6EF";
+    if (type.includes("REJECT") || type.includes("FAIL")) return "#FAECEC";
+    if (type.includes("REMIND")) return "#FDF5E6";
+    if (type.includes("UPDATE") || type.includes("SUBMIT")) return "#F4ECF7";
+    return "#eee";
   };
 
   return (
@@ -43,10 +41,12 @@ export function RecentActivities({ data }: Props) {
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text)", lineHeight: 1.4 }}>
-                <span style={{ fontWeight: 600 }}>{act.user}</span> {act.action} <span style={{ fontWeight: 600 }}>{act.contract}</span>
+                <span style={{ fontWeight: 600 }}>{act.actorName || act.user}</span> {act.title || act.action} <span style={{ fontWeight: 600 }}>{act.description || act.contract}</span>
               </p>
             </div>
-            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>{act.time}</span>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+              {act.createdAt ? new Date(act.createdAt).toLocaleString('vi-VN') : act.time}
+            </span>
           </div>
         ))}
       </div>

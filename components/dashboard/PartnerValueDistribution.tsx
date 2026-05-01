@@ -2,7 +2,12 @@ import Link from "next/link";
 import type { MappedDashboardData } from "@/lib/dashboard/dashboard-mapper";
 
 type Props = {
-  data: MappedDashboardData["tables"]["partnerValues"];
+  data: Array<{
+    partnerName?: string;
+    partner?: string;
+    value: number;
+    percentage: number;
+  }>;
 };
 
 export function PartnerValueDistribution({ data }: Props) {
@@ -16,9 +21,11 @@ export function PartnerValueDistribution({ data }: Props) {
         {data.map((p, idx) => (
           <div key={idx}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "0.4rem" }}>
-              <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "var(--text)" }}>{p.partner}</span>
+              <Link href={`/admin/contracts?search=${encodeURIComponent(p.partnerName || p.partner || "")}`} style={{ fontSize: "0.85rem", fontWeight: 500, color: "var(--primary)", textDecoration: "none" }}>
+                {p.partnerName || p.partner || "Không rõ đối tác"}
+              </Link>
               <div style={{ textAlign: "right" }}>
-                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text)" }}>{p.value} Tỷ VNĐ</span>
+                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text)" }}>{(p.value / 1_000_000_000).toFixed(2)} Tỷ VNĐ</span>
                 <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginLeft: "0.75rem", minWidth: "40px", display: "inline-block" }}>{p.percentage}%</span>
               </div>
             </div>

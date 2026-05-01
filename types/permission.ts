@@ -2,6 +2,7 @@ export const PERMISSIONS = [
   "admin.dashboard.view",
   "user.view",
   "user.manage",
+  "user.delete",
   "contract.view",
   "contract.create",
   "contract.update",

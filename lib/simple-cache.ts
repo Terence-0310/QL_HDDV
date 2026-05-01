@@ -21,3 +21,11 @@ export function setCacheValue<T>(key: string, value: T, ttlMs: number) {
     expiresAt: Date.now() + ttlMs,
   });
 }
+
+export function invalidateCacheByPrefix(prefix: string) {
+  for (const key of memoryCache.keys()) {
+    if (key.startsWith(prefix)) {
+      memoryCache.delete(key);
+    }
+  }
+}
