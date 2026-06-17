@@ -1,13 +1,13 @@
 import { ApprovalStatus, Prisma, UserStatus } from "@prisma/client";
 import { AppError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { getCacheValue, setCacheValue, invalidateCacheByPrefix } from "@/lib/simple-cache";
+import { getCacheValue, setCacheValue, invalidateCacheByPrefix, withCache } from "@/lib/simple-cache";
 import { toCacheKey } from "@/lib/cache-key";
 import { createAuditLog } from "@/services/audit.service";
 import { hashPassword } from "@/lib/password";
 import type { AuthUser } from "@/types/auth";
 import type { AdminUserListQuery } from "@/types/admin";
-
+import { buildPaginationOptions, buildContractWhereClause, buildPaginationResult } from "@/lib/query-builder";
 export async function listUsers(query: AdminUserListQuery) {
   const page = Math.max(query.page ?? 1, 1);
   const pageSize = Math.min(Math.max(query.pageSize ?? 20, 1), 100);
@@ -253,60 +253,28 @@ export async function listAdminContracts(query: {
   sortBy?: "createdAt" | "updatedAt" | "endDate" | "title" | "value";
   sortOrder?: "asc" | "desc";
 }) {
-  const page = Math.max(query.page ?? 1, 1);
-  const pageSize = Math.min(Math.max(query.pageSize ?? 20, 1), 100);
-  const skip = (page - 1) * pageSize;
+  const { page, pageSize, skip } = buildPaginationOptions(query.page, query.pageSize);
   const cacheKey = toCacheKey("admin:contracts:list", { query: { ...query, page, pageSize } });
-  const cached = getCacheValue<{
-    items: Array<Record<string, unknown>>;
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-  }>(cacheKey);
-  if (cached) {
-    return cached;
-  }
+  
+  return withCache(cacheKey, 10_000, async () => {
+    const where = buildContractWhereClause(query);
+    const orderBy = { [query.sortBy ?? "createdAt"]: query.sortOrder ?? "desc" } as Prisma.ContractOrderByWithRelationInput;
 
-  const where: Prisma.ContractWhereInput = {
-    status: query.status as Prisma.EnumContractStatusFilter["equals"] | undefined,
-    ownerId: query.ownerId,
-    OR: query.search
-      ? [
-          { title: { contains: query.search } },
-          { code: { contains: query.search } },
-          { partnerName: { contains: query.search } },
-          { partnerEmail: { contains: query.search } },
-        ]
-      : undefined,
-  };
-
-  const orderBy = { [query.sortBy ?? "createdAt"]: query.sortOrder ?? "desc" } as Prisma.ContractOrderByWithRelationInput;
-
-  const [items, total] = await prisma.$transaction([
-    prisma.contract.findMany({
-      where,
-      skip,
-      take: pageSize,
-      orderBy,
-      include: {
-        owner: {
-          select: { id: true, name: true, email: true, role: true, status: true },
+    const [items, total] = await prisma.$transaction([
+      prisma.contract.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy,
+        include: {
+          owner: { select: { id: true, name: true, email: true, role: true, status: true } },
         },
-      },
-    }),
-    prisma.contract.count({ where }),
-  ]);
+      }),
+      prisma.contract.count({ where }),
+    ]);
 
-  const result = {
-    items,
-    page,
-    pageSize,
-    total,
-    totalPages: Math.max(Math.ceil(total / pageSize), 1),
-  };
-  setCacheValue(cacheKey, result, 10_000);
-  return result;
+    return buildPaginationResult(items, total, page, pageSize);
+  });
 }
 
 export async function listPendingApprovals(query: {

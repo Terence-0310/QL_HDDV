@@ -1,7 +1,8 @@
 import { Prisma, UserRole, type Contract } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCacheValue, setCacheValue, invalidateCacheByPrefix } from "@/lib/simple-cache";
+import { getCacheValue, setCacheValue, invalidateCacheByPrefix, withCache } from "@/lib/simple-cache";
 import { toCacheKey } from "@/lib/cache-key";
+import { buildPaginationOptions, buildContractWhereClause, buildPaginationResult } from "@/lib/query-builder";
 import { AppError } from "@/lib/errors";
 import { createAuditLog } from "@/services/audit.service";
 import type { AuthUser } from "@/types/auth";
@@ -35,36 +36,11 @@ export async function assertContractAccessById(contractId: string, authUser: Aut
 }
 
 function buildContractListWhereClause(input: ListContractsInput, authUser: AuthUser): Prisma.ContractWhereInput {
-  const dateFilters: Prisma.ContractWhereInput = {};
-
-  if (input.startDateFrom || input.startDateTo) {
-    dateFilters.startDate = {
-      gte: input.startDateFrom,
-      lte: input.startDateTo,
-    };
-  }
-
-  if (input.endDateFrom || input.endDateTo) {
-    dateFilters.endDate = {
-      gte: input.endDateFrom,
-      lte: input.endDateTo,
-    };
-  }
-
-  return {
-    ...dateFilters,
-    status: input.status,
-    autoRenew: input.autoRenew,
-    ownerId: (authUser.role === UserRole.ADMIN || authUser.role === UserRole.SUPER_ADMIN) ? input.ownerId : authUser.id,
-    OR: input.search
-      ? [
-          { title: { contains: input.search } },
-          { code: { contains: input.search } },
-          { partnerName: { contains: input.search } },
-          { partnerEmail: { contains: input.search } },
-        ]
-      : undefined,
-  };
+  const isAdmin = authUser.role === UserRole.ADMIN || authUser.role === UserRole.SUPER_ADMIN;
+  return buildContractWhereClause({
+    ...input,
+    ownerId: isAdmin ? input.ownerId : authUser.id,
+  });
 }
 
 function buildContractListOrderBy(
@@ -233,36 +209,25 @@ export async function listContracts(
   input: ListContractsInput,
   authUser: AuthUser,
 ): Promise<ContractListResult<ContractListItem>> {
-  const page = Math.max(input.page ?? 1, 1);
-  const pageSize = Math.min(Math.max(input.pageSize ?? 20, 1), 100);
-  const skip = (page - 1) * pageSize;
+  const { page, pageSize, skip } = buildPaginationOptions(input.page, input.pageSize);
   const where = buildContractListWhereClause(input, authUser);
 
   const cacheKey = toCacheKey("contracts:list", { authUserId: authUser.id, role: authUser.role, input: { ...input, page, pageSize } });
-  const cached = getCacheValue<ContractListResult<ContractListItem>>(cacheKey);
-  if (cached) {
-    return cached;
-  }
 
-  const [items, total] = await prisma.$transaction([
-    prisma.contract.findMany({
-      where,
-      orderBy: buildContractListOrderBy(input),
-      skip,
-      take: pageSize,
-    }),
-    prisma.contract.count({ where }),
-  ]);
+  return withCache(cacheKey, 10_000, async () => {
+    const [items, total] = await prisma.$transaction([
+      prisma.contract.findMany({
+        where,
+        orderBy: buildContractListOrderBy(input),
+        skip,
+        take: pageSize,
+      }),
+      prisma.contract.count({ where }),
+    ]);
 
-  const result = {
-    items: items.map(mapContractResponse),
-    page,
-    pageSize,
-    total,
-    totalPages: Math.max(Math.ceil(total / pageSize), 1),
-  };
-  setCacheValue(cacheKey, result, 10_000);
-  return result;
+    const mappedItems = items.map(mapContractResponse);
+    return buildPaginationResult(mappedItems, total, page, pageSize);
+  });
 }
 
 export async function updateContractFileMetadata(

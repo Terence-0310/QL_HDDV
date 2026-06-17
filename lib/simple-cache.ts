@@ -29,3 +29,11 @@ export function invalidateCacheByPrefix(prefix: string) {
     }
   }
 }
+
+export async function withCache<T>(key: string, ttlMs: number, fetcher: () => Promise<T>): Promise<T> {
+  const cached = getCacheValue<T>(key);
+  if (cached !== null) return cached;
+  const data = await fetcher();
+  setCacheValue(key, data, ttlMs);
+  return data;
+}

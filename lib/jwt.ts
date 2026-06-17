@@ -26,3 +26,19 @@ export function verifyAuthToken(token: string): AuthTokenPayload {
     throw new AppError("Invalid or expired token", 401, "UNAUTHENTICATED");
   }
 }
+
+export function signResetPasswordToken(userId: string, passwordHash: string): string {
+  const secret = getJwtSecret() + passwordHash;
+  return jwt.sign({ id: userId }, secret, {
+    expiresIn: "15m", // Link reset chỉ có hiệu lực 15 phút
+  });
+}
+
+export function verifyResetPasswordToken(token: string, passwordHash: string): { id: string } {
+  try {
+    const secret = getJwtSecret() + passwordHash;
+    return jwt.verify(token, secret) as { id: string };
+  } catch {
+    throw new AppError("Link khôi phục không hợp lệ hoặc đã hết hạn.", 400, "INVALID_TOKEN");
+  }
+}

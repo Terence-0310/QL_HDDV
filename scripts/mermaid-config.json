@@ -1,0 +1,10 @@
+{
+  "theme": "default",
+  "themeVariables": {
+    "fontFamily": "Segoe UI, Arial, sans-serif",
+    "fontSize": "16px"
+  },
+  "flowchart": { "htmlLabels": true, "curve": "basis" },
+  "er": { "layoutDirection": "TB" },
+  "sequence": { "useMaxWidth": true }
+}

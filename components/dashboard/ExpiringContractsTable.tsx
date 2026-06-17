@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
-import type { MappedDashboardData } from "@/lib/dashboard/dashboard-mapper";
 
 type Props = {
   data: any[];

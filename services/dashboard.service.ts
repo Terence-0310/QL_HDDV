@@ -16,20 +16,23 @@ export async function getDashboardSummary(authUser: AuthUser, from?: Date, to?: 
   const roleWhere = getRoleWhere(authUser);
   const dateWhere: Prisma.ContractWhereInput = {};
   
-  if (from && to) {
-    dateWhere.createdAt = { gte: startOfUtcDay(from), lte: endOfUtcDay(to) };
-  } else {
-    // Mặc định lấy dữ liệu 1 năm (365 ngày) để hiển thị Tổng quan đồ sộ hơn
-    const now = new Date();
-    dateWhere.createdAt = { gte: addDaysUtc(startOfUtcDay(now), -365), lte: endOfUtcDay(now) };
-  }
+  const now = new Date();
+  const actualFrom = from ? startOfUtcDay(from) : addDaysUtc(startOfUtcDay(now), -365);
+  const actualTo = to ? endOfUtcDay(to) : endOfUtcDay(now);
+
+  dateWhere.createdAt = { gte: actualFrom, lte: actualTo };
 
   const baseWhere = { ...roleWhere, ...dateWhere };
   
-  const now = new Date();
   const todayStart = startOfUtcDay(now);
   const expiringSoonBoundary = addDaysUtc(endOfUtcDay(now), 7); // Default 7 days, or maybe 30?
   
+  const durationMs = actualTo.getTime() - actualFrom.getTime();
+  const previousFrom = new Date(actualFrom.getTime() - durationMs);
+  const previousTo = new Date(actualTo.getTime() - durationMs);
+  
+  const previousBaseWhere = { ...roleWhere, createdAt: { gte: previousFrom, lte: previousTo } };
+
   const [
     totalContracts,
     activeContracts,
@@ -42,7 +45,8 @@ export async function getDashboardSummary(authUser: AuthUser, from?: Date, to?: 
     retryReminders,
     deadReminders,
     contractValueAgg,
-    urgentContracts
+    urgentContracts,
+    previousTotalContracts
   ] = await Promise.all([
     prisma.contract.count({ where: baseWhere }),
     prisma.contract.count({ where: { ...baseWhere, status: ContractStatus.ACTIVE } }),
@@ -55,8 +59,16 @@ export async function getDashboardSummary(authUser: AuthUser, from?: Date, to?: 
     prisma.reminderJob.count({ where: { status: ReminderJobStatus.FAILED } }),
     prisma.reminderJob.count({ where: { status: ReminderJobStatus.DEAD_LETTER } }),
     prisma.contract.aggregate({ _sum: { value: true }, where: baseWhere }),
-    prisma.contract.count({ where: { ...roleWhere, approvalStatus: ApprovalStatus.PENDING, submittedForApprovalAt: { lt: addDaysUtc(now, -3) } } })
+    prisma.contract.count({ where: { ...roleWhere, approvalStatus: ApprovalStatus.PENDING, submittedForApprovalAt: { lt: addDaysUtc(now, -3) } } }),
+    prisma.contract.count({ where: previousBaseWhere })
   ]);
+
+  let growthRate = 0;
+  if (previousTotalContracts === 0) {
+    growthRate = totalContracts > 0 ? 100 : 0;
+  } else {
+    growthRate = ((totalContracts - previousTotalContracts) / previousTotalContracts) * 100;
+  }
 
   return {
     totalContracts,
@@ -70,7 +82,7 @@ export async function getDashboardSummary(authUser: AuthUser, from?: Date, to?: 
     retryReminders,
     deadReminders,
     totalContractValue: contractValueAgg._sum.value || 0,
-    growthRate: 15, // Mocked for now, can be calculated by comparing previous period
+    growthRate: Number(growthRate.toFixed(1)),
     urgentContracts
   };
 }

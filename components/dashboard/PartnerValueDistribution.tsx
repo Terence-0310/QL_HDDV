@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { MappedDashboardData } from "@/lib/dashboard/dashboard-mapper";
 
 type Props = {
   data: Array<{

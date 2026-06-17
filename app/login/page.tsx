@@ -7,8 +7,8 @@ import { apiRequest } from "@/lib/api-client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("Admin@12345");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -55,7 +55,10 @@ export default function LoginPage() {
         </label>
 
         <label>
-          <span>Mật khẩu</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>Mật khẩu</span>
+            <Link href="/forgot-password" style={{ fontSize: "0.85rem", color: "var(--primary)", textDecoration: "none" }}>Quên mật khẩu?</Link>
+          </div>
           <input
             type="password"
             value={password}
@@ -82,10 +85,7 @@ export default function LoginPage() {
         </div>
       ) : null}
 
-        <div className="hint-box">
-          Tài khoản demo: <strong>admin@example.com</strong> / <strong>Admin@12345</strong>
-        </div>
-        <p style={{ margin: "0.8rem 0 0", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+        <p style={{ margin: "0.8rem 0 0", color: "var(--text-muted)", fontSize: "0.9rem", textAlign: "center" }}>
           Chưa có tài khoản? <Link href="/register" className="link-inline">Đăng ký</Link>
         </p>
       </section>
