@@ -81,10 +81,10 @@ Hệ thống triển khai mô hình **RBAC (Role-Based Access Control)** với 4
 ```mermaid
 flowchart LR
     %% Định dạng Actors
-    System(("Hệ Thống\n(Background Job)"))
-    Staff(("Staff\n(Nhân viên)"))
-    Admin(("Admin\n(Quản lý)"))
-    SuperAdmin(("Super Admin\n(Quản trị)"))
+    System(("Hệ Thống<br/>Background Job"))
+    Staff(("Staff<br/>Nhân viên"))
+    Admin(("Admin<br/>Quản lý"))
+    SuperAdmin(("Super Admin<br/>Quản trị"))
 
     %% Nhóm Usecase Hợp đồng
     subgraph ContractManagement
@@ -144,7 +144,7 @@ stateDiagram-v2
     
     APPROVED --> ACTIVE : Đến ngày hiệu lực
     
-    ACTIVE --> EXPIRING_SOON : Còn <= 30 ngày
+    ACTIVE --> EXPIRING_SOON : Còn ≤ 30 ngày
     EXPIRING_SOON --> EXPIRED : Quá ngày kết thúc
     
     ACTIVE --> TERMINATED : Huỷ/Chấm dứt sớm
