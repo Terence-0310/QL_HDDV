@@ -50,6 +50,10 @@ async function main() {
   const users = await prisma.user.findMany();
   const admin = users.find(u => u.email === "admin@example.com")!;
   const staffUsers = users.filter(u => u.role === UserRole.STAFF);
+  // Demo accounts that must own real data so STAFF/USER logins are not empty
+  const staffDemo = users.find(u => u.email === "staff@example.com")!;
+  const johnUser = users.find(u => u.email === "john@example.com")!;
+  const otherStaff = staffUsers.filter(u => u.email !== "staff@example.com");
 
   // 2. Partners (1000 partners)
   console.log("Seeding Partners...");
@@ -107,24 +111,31 @@ async function main() {
       const i = batch * 100 + j; // 1 to 1000
 
       const matrix = statusMatrix[i % statusMatrix.length];
-      const status = matrix.status;
+      let status: ContractStatus = matrix.status;
       let approvalStatus: ApprovalStatus = matrix.approvalStatus;
-      
-      let daysOffset = (i * 7) % 700; 
+
+      let daysOffset = (i * 7) % 700;
       let startDate = subDays(now, daysOffset);
       let endDate = addDays(startDate, 365 + (i % 3) * 180);
-      
+
       if (status === ContractStatus.ACTIVE) {
         if (i % 15 === 0) endDate = addDays(now, 5);
         else if (i % 8 === 0) endDate = addDays(now, 12);
         else if (i % 10 === 0) endDate = addDays(now, 28);
         else endDate = addDays(now, 150 + (i % 200));
+        // Mark contracts expiring within 30 days as EXPIRING_SOON (realistic dashboard)
+        const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / 86_400_000);
+        if (daysLeft <= 30) status = ContractStatus.EXPIRING_SOON;
       } else if (status === ContractStatus.EXPIRED) {
         endDate = subDays(now, 10 + (i % 100));
       }
 
       const partner = partners[i % partners.length];
-      const owner = staffUsers[i % staffUsers.length];
+      // Guarantee the demo STAFF and USER accounts own a realistic slice of data
+      let owner;
+      if (i <= 40) owner = staffDemo;            // staff@example.com -> 40 contracts (all statuses)
+      else if (i <= 70) owner = johnUser;        // john@example.com (USER) -> 30 contracts
+      else owner = otherStaff[i % otherStaff.length];
 
       const valueMultiplier = i % 10 === 0 ? 500000000 : 50000000;
       const value = (10 + (i % 20)) * valueMultiplier;
@@ -132,7 +143,7 @@ async function main() {
       const contract = await prisma.contract.create({
         data: {
           code: `HD-2026-${i.toString().padStart(4, '0')}`,
-          title: `Hợp đồng ${types[i % types.length].name} - ${partner.name}`,
+          title: `${types[i % types.length].name} - ${partner.name}`,
           partnerId: partner.id,
           contractTypeId: types[i % types.length].id,
           partnerName: partner.name,
@@ -171,7 +182,7 @@ async function main() {
       }
 
       // 6. Reminder Milestones & Logs
-      if (status === ContractStatus.ACTIVE && contract.endDate > now) {
+      if ((status === ContractStatus.ACTIVE || status === ContractStatus.EXPIRING_SOON) && contract.endDate > now) {
         const offsets = [7, 15, 30, 60];
         for (const offset of offsets) {
           const reminderDate = subDays(contract.endDate, offset);
@@ -191,7 +202,7 @@ async function main() {
         }
       }
 
-      if (i % 15 === 1 && status === ContractStatus.ACTIVE) {
+      if (i % 15 === 1 && (status === ContractStatus.ACTIVE || status === ContractStatus.EXPIRING_SOON)) {
         await prisma.reminderJob.create({
           data: { contractId: contract.id, reminderThresholdDays: 7, scheduledAt: subDays(now, 1), recipientEmail: owner.email, type: "EXPIRING_SOON", status: "FAILED", errorMessage: "SMTP Connection Timeout", attempts: 3 }
         });
